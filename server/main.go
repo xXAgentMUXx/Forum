@@ -45,16 +45,17 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]string{"message": "Register Complete"})
+	json.NewEncoder(w).Encode(map[string]string{"message": "Inscription réussie"})
 }
+
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	var creds struct {
-		Email    string `json:"E-mail"`
-		Password string `json:"Password"`
-	}
+    Email    string `json:"Email"`
+    Password string `json:"Password"`
+}
 	err := json.NewDecoder(r.Body).Decode(&creds)
 	if err != nil {
-		http.Error(w, "Invalides Data", http.StatusBadRequest)
+		http.Error(w, "Données invalides", http.StatusBadRequest)
 		return
 	}
 	err = auth.LoginUser(db, creds.Email, creds.Password, w)
@@ -62,4 +63,5 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
+	json.NewEncoder(w).Encode(map[string]string{"message": "Connexion réussie"})
 }
