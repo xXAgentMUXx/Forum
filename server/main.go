@@ -14,6 +14,6 @@ type Index struct {
 }
 
 func main() {
-	mux := http.NewServeMux()
+	mux := http.NewServeMux() // mux sert pour se connecter a son compte google
 	mux.HandleFunc("/forum", Forum.Forum)
 }
