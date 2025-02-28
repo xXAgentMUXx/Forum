@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login</title>
+    <link rel="stylesheet" type="text/css" href="/web/css/style.css">
+
+</head>
+<body>
+    <h1>Connexion</h1>
+    <form action="/login" method="POST">
+        <input type="email" name="email" required placeholder="Email">
+        <input type="password" name="password" required placeholder="Password">
+        <button type="submit">Login</button>
+    </form>
+    <a href="/auth/google">
+        <button style="background-color: #db4437; color: white; padding: 10px; border: none; width: 100%;">Sign in with Google</button>
+    </a>
+    <a href="/auth/github">
+        <button style="background-color: #24292e; color: white; padding: 10px; border: none; width: 100%;">Sign in with GitHub</button>
+    </a>
+</body>
+</html>

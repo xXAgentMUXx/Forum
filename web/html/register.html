@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Register</title>
+    <link rel="stylesheet" type="text/css" href="/web/css/style.css">
+</head>
+<body>
+    <h1>Inscription</h1>
+    <form action="/register" method="POST">
+        <input type="email" name="email" required placeholder="Email">
+        <input type="text" name="username" required placeholder="Username">
+        <input type="password" name="password" required placeholder="Password">
+        <button type="submit">Register</button>
+    </form>
+    <a href="/auth/google">
+        <button style="background-color: #db4437; color: white; padding: 10px; border: none; width: 100%;">Sign in with Google</button>
+    </a>
+    <a href="/auth/github">
+        <button style="background-color: #24292e; color: white; padding: 10px; border: none; width: 100%;">Sign in with GitHub</button>
+    </a>
+</body>
+</html>
