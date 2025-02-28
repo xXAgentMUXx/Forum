@@ -22,6 +22,10 @@ type user struct {
 }
 
 
-func Forum(w http.ResponseWriter, r *http.Request) {
+func Forum() {
 	
+}
+
+func HandlerForum(w http.ResponseWriter, r *http.Request) {
+
 }
