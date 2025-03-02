@@ -2,6 +2,7 @@ package auth
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -11,15 +12,14 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-var db *sql.DB
-
+var DB *sql.DB
 func InitDB() {
 	var err error
-	db, err = sql.Open("sqlite3", "forum.db")
+	DB, err = sql.Open("sqlite3", "forum.db")
 	if err != nil {
 		log.Fatal(err)
 	}
-	if err = db.Ping(); err != nil {
+	if err = DB.Ping(); err != nil {
 		log.Fatal(err)
 	}
 	fmt.Println("Database connected!")
@@ -43,7 +43,7 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 	password := r.FormValue("password")
 
 	var exists string
-	err := db.QueryRow("SELECT id FROM users WHERE email = ?", email).Scan(&exists)
+	err := DB.QueryRow("SELECT id FROM users WHERE email = ?", email).Scan(&exists)
 	if err == nil {
 		http.Error(w, "Email already taken", http.StatusConflict)
 		return
@@ -54,12 +54,11 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	userID := uuid.New().String()
-	_, err = db.Exec("INSERT INTO users (id, email, username, password) VALUES (?, ?, ?, ?)", userID, email, username, string(hashedPassword))
+	_, err = DB.Exec("INSERT INTO users (id, email, username, password) VALUES (?, ?, ?, ?)", userID, email, username, string(hashedPassword))
 	if err != nil {
 		http.Error(w, "Error registering user", http.StatusInternalServerError)
 		return
 	}
-
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }
 func LoginUser(w http.ResponseWriter, r *http.Request) {
@@ -75,7 +74,7 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 	password := r.FormValue("password")
 
 	var userID, storedPassword string
-	err := db.QueryRow("SELECT id, password FROM users WHERE email = ?", email).Scan(&userID, &storedPassword)
+	err := DB.QueryRow("SELECT id, password FROM users WHERE email = ?", email).Scan(&userID, &storedPassword)
 	if err != nil {
 		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
 		return
@@ -86,7 +85,7 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 	}
 	sessionID := uuid.New().String()
 	expiration := time.Now().Add(24 * time.Hour)
-	_, err = db.Exec("INSERT INTO sessions (id, user_id, expires_at) VALUES (?, ?, ?)", sessionID, userID, expiration)
+	_, err = DB.Exec("INSERT INTO sessions (id, user_id, expires_at) VALUES (?, ?, ?)", sessionID, userID, expiration)
 	if err != nil {
 		http.Error(w, "Error creating session", http.StatusInternalServerError)
 		return
@@ -96,6 +95,17 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 		Value:   sessionID,
 		Expires: expiration,
 	})
-
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+	http.Redirect(w, r, "/forum", http.StatusSeeOther)
+}
+func GetUserFromSession(r *http.Request) (string, error) {
+	cookie, err := r.Cookie("session_token")
+	if err != nil {
+		return "", errors.New("session not found")
+	}
+	var userID string
+	err = DB.QueryRow("SELECT user_id FROM sessions WHERE id = ? AND expires_at > CURRENT_TIMESTAMP", cookie.Value).Scan(&userID)
+	if err != nil {
+		return "", errors.New("invalid session")
+	}
+	return userID, nil
 }

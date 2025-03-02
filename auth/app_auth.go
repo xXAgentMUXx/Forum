@@ -20,7 +20,6 @@ func InitOAuth() {
 		Scopes:       []string{"email", "profile"},
 		Endpoint:     google.Endpoint,
 	}
-
 	GithubOauthConfig = &oauth2.Config{
 		ClientID:     os.Getenv("GITHUB_CLIENT_ID"),
 		ClientSecret: os.Getenv("GITHUB_CLIENT_SECRET"),
@@ -33,7 +32,6 @@ func AuthGoogle(w http.ResponseWriter, r *http.Request) {
 	url := GoogleOauthConfig.AuthCodeURL("state")
 	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 }
-
 func AuthGithub(w http.ResponseWriter, r *http.Request) {
 	url := GithubOauthConfig.AuthCodeURL("state", oauth2.AccessTypeOffline)
 	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
