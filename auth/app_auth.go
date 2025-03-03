@@ -2,8 +2,7 @@ package auth
 
 import (
 	"context"
-	"fmt"
-	"io/ioutil"
+	"encoding/json"
 	"net/http"
 	"os"
 
@@ -60,13 +59,14 @@ func GoogleCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer resp.Body.Close()
+	var userInfo map[string]interface{}
+	json.NewDecoder(resp.Body).Decode(&userInfo)
 
-	userInfo, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		http.Error(w, "Failed to read response", http.StatusInternalServerError)
-		return
-	}
-	fmt.Fprintf(w, "User Info: %s", userInfo) 
+	
+	session, _ := store.Get(r, "session-name")
+	session.Values["email"] = userInfo["email"]
+	session.Save(r, w)
+	http.Redirect(w, r, "/forum", http.StatusSeeOther) 
 }
 
 func GithubCallback(w http.ResponseWriter, r *http.Request) {
@@ -77,7 +77,7 @@ func GithubCallback(w http.ResponseWriter, r *http.Request) {
 	}
 	token, err := GithubOauthConfig.Exchange(context.Background(), code)
 	if err != nil {
-		http.Error(w, "Failed to exchange token", http.StatusInternalServerError)
+		http.Error(w, "Failed to connect (old request)", http.StatusInternalServerError)
 		return
 	}
 	client := GithubOauthConfig.Client(context.Background(), token)
@@ -88,10 +88,14 @@ func GithubCallback(w http.ResponseWriter, r *http.Request) {
 	}
 	defer resp.Body.Close()
 
-	userInfo, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		http.Error(w, "Failed to read response", http.StatusInternalServerError)
-		return
-	}
-	fmt.Fprintf(w, "User Info: %s", userInfo) 
+	var userInfo map[string]interface{}
+	json.NewDecoder(resp.Body).Decode(&userInfo)
+
+
+	session, _ := store.Get(r, "session-name")
+	session.Values["email"] = userInfo["email"]
+	session.Save(r, w)
+	http.Redirect(w, r, "/forum", http.StatusSeeOther)
 }
+
+

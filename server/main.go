@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	
-	"github.com/joho/godotenv"
-	_ "github.com/mattn/go-sqlite3"
+
 	auth "Forum/auth"
 	forum "Forum/forum"
+
+	"github.com/joho/godotenv"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 func main() {
@@ -28,7 +29,6 @@ func main() {
 	http.HandleFunc("/auth/github", auth.AuthGithub)
 	http.HandleFunc("/auth/callback/google", auth.GoogleCallback)
 	http.HandleFunc("/auth/callback/github", auth.GithubCallback)
-
 	http.HandleFunc("/forum", forum.ServeForum)
 	http.HandleFunc("/post/create", forum.CreatePost)
 	http.HandleFunc("/posts", forum.GetAllPosts)
