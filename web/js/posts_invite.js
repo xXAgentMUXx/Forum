@@ -23,16 +23,11 @@ function fetchPosts(filter = "all", categoryID = "") {
                     postElement.classList.add("post");
                     postElement.innerHTML = `
                         <h2>${post.Title}</h2>
-                        <h2>${post.Title}</h2>
                         <p>${post.Content}</p>
-                        <button onclick="likePost('${post.ID}', 'like')">👍 <span id="like-count-${post.ID}">${likeCount}</span></button>
-                        <button onclick="likePost('${post.ID}', 'dislike')">👎 <span id="dislike-count-${post.ID}">${dislikeCount}</span></button>
-                        <button onclick="showCommentForm('${post.ID}')">Commenter</button>
-                        <button onclick="deletePost('${post.ID}')">🗑️ Supprimer</button>
+                        👍 <span id="like-count-${post.ID}">${likeCount}</span></button>
+                        👎 <span id="dislike-count-${post.ID}">${dislikeCount}</span></button>
                         <div id="comments-${post.ID}"></div>
                         <div id="comment-form-${post.ID}" style="display:none;">
-                            <textarea id="comment-text-${post.ID}" placeholder="Votre commentaire"></textarea>
-                            <button onclick="postComment('${post.ID}')">Publier</button>
                         </div>
                     `;
                     postContainer.appendChild(postElement);
@@ -59,45 +54,6 @@ function fetchLikeDislikeCount(contentID, contentType, callback) {
         });
 }
 
-function applyFilter() {
-    let filter = document.getElementById("filter").value;
-    let categoryInput = document.getElementById("category-id");
-    
-    if (filter === "category") {
-        categoryInput.style.display = "inline";
-    } else {
-        categoryInput.style.display = "none";
-    }
-    
-    let categoryID = categoryInput.value;
-    fetchPosts(filter, categoryID);
-}
-
-function deletePost(postID) {
-    fetch("/post/delete", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: `id=${postID}`
-    }).then(() => fetchPosts());
-}
-
-function createPost() {
-    let title = document.getElementById("post-title").value;
-    let content = document.getElementById("post-content").value;
-    fetch("/post/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: `title=${encodeURIComponent(title)}&content=${encodeURIComponent(content)}`
-    }).then(() => fetchPosts());
-}
-
-function likePost(postID, type) {
-    fetch("/like/post", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: `id=${postID}&type=${type}`
-    }).then(() => fetchPosts());
-}
 function showPostForm() {
     let form = document.getElementById("post-form");
     if (form.style.display === "none") {

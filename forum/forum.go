@@ -12,6 +12,9 @@ import (
 func ServeForum(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "web/html/forum.html")
 }
+func ServeForumInvite(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "web/html/forum_invite.html")
+}
 func LikeContent(w http.ResponseWriter, r *http.Request, contentType string) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)

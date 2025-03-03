@@ -68,18 +68,19 @@ func GoogleCallback(w http.ResponseWriter, r *http.Request) {
 	session.Save(r, w)
 	http.Redirect(w, r, "/forum", http.StatusSeeOther) 
 }
-
 func GithubCallback(w http.ResponseWriter, r *http.Request) {
 	code := r.URL.Query().Get("code")
 	if code == "" {
 		http.Error(w, "Code not found", http.StatusBadRequest)
 		return
 	}
+
 	token, err := GithubOauthConfig.Exchange(context.Background(), code)
 	if err != nil {
-		http.Error(w, "Failed to connect (old request)", http.StatusInternalServerError)
+		http.Error(w, "Failed to exchange token", http.StatusInternalServerError)
 		return
 	}
+
 	client := GithubOauthConfig.Client(context.Background(), token)
 	resp, err := client.Get("https://api.github.com/user")
 	if err != nil {
@@ -96,6 +97,17 @@ func GithubCallback(w http.ResponseWriter, r *http.Request) {
 	session.Values["email"] = userInfo["email"]
 	session.Save(r, w)
 	http.Redirect(w, r, "/forum", http.StatusSeeOther)
+}
+func AuthMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		session, _ := store.Get(r, "session-name")
+		if _, ok := session.Values["email"]; !ok {
+			http.Error(w, "Access denied", http.StatusUnauthorized)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }
 
 

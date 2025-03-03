@@ -30,6 +30,7 @@ func main() {
 	http.HandleFunc("/auth/callback/google", auth.GoogleCallback)
 	http.HandleFunc("/auth/callback/github", auth.GithubCallback)
 	http.HandleFunc("/forum", forum.ServeForum)
+	http.HandleFunc("/forum_invite", forum.ServeForumInvite)
 	http.HandleFunc("/post/create", forum.CreatePost)
 	http.HandleFunc("/posts", forum.GetAllPosts)
 	http.HandleFunc("/comments", forum.GetComments)
