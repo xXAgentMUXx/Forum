@@ -26,6 +26,9 @@ func main() {
 	http.HandleFunc("/login", auth.LoginUser)
 	http.HandleFunc("/auth/google", auth.AuthGoogle)
 	http.HandleFunc("/auth/github", auth.AuthGithub)
+	http.HandleFunc("/auth/callback/google", auth.GoogleCallback)
+	http.HandleFunc("/auth/callback/github", auth.GithubCallback)
+
 	http.HandleFunc("/forum", forum.ServeForum)
 	http.HandleFunc("/post/create", forum.CreatePost)
 	http.HandleFunc("/posts", forum.GetAllPosts)
