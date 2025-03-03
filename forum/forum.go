@@ -69,7 +69,6 @@ func GetLikesAndDislike(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid parameters", http.StatusBadRequest)
 		return
 	}
-
 	var likeCount, dislikeCount int
 	var query string
 
@@ -78,13 +77,11 @@ func GetLikesAndDislike(w http.ResponseWriter, r *http.Request) {
 	} else {
 		query = "SELECT COALESCE(COUNT(CASE WHEN type='like' THEN 1 END), 0), COALESCE(COUNT(CASE WHEN type='dislike' THEN 1 END), 0) FROM likes WHERE comment_id = ?"
 	}
-
 	err := auth.DB.QueryRow(query, contentID).Scan(&likeCount, &dislikeCount)
 	if err != nil {
 		http.Error(w, "Error retrieving like count", http.StatusInternalServerError)
 		return
 	}
-
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]int{"likes": likeCount, "dislikes": dislikeCount})
 }

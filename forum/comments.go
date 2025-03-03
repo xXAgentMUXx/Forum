@@ -54,7 +54,6 @@ func GetComments(w http.ResponseWriter, r *http.Request) {
         Content   string    `json:"content"`
         CreatedAt time.Time `json:"created_at"`
     }
-
     var comments []Comment
     for rows.Next() {
         var comment Comment
@@ -64,7 +63,6 @@ func GetComments(w http.ResponseWriter, r *http.Request) {
         }
         comments = append(comments, comment)
     }
-
     w.Header().Set("Content-Type", "application/json")
     json.NewEncoder(w).Encode(comments)
 }
