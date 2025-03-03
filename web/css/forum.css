@@ -66,9 +66,7 @@ body{
     align-items: center;
     gap: 10px;
     border-radius: 5px;
-}
-
-#filter-container select, #filter-container input {
+}#filter-container select, #filter-container input {
     padding: 5px;
     border-radius: 5px;
     border: none;

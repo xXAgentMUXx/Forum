@@ -1,22 +1,27 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
-    <title>Login</title>
-    <link rel="stylesheet" type="text/css" href="/web/css/style.css">
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion</title>
+    <link rel="stylesheet" href="/web/css/login.css">
 </head>
 <body>
-    <h1>Connexion</h1>
-    <form action="/login" method="POST">
-        <input type="email" name="email" required placeholder="Email">
-        <input type="password" name="password" required placeholder="Password">
-        <button type="submit">Login</button>
-    </form>
-    <a href="/auth/google">
-        <button style="background-color: #db4437; color: white; padding: 10px; border: none; width: 100%;">Sign in with Google</button>
-    </a>
-    <a href="/auth/github">
-        <button style="background-color: #24292e; color: white; padding: 10px; border: none; width: 100%;">Sign in with GitHub</button>
-    </a>
+    <div class="container">
+        <h1>Connexion</h1>
+        <form action="/login" method="POST">
+            <input type="email" name="email" required placeholder="Email">
+            <input type="password" name="password" required placeholder="Mot de passe">
+            <button type="submit">Se connecter</button>
+        </form>
+        <a href="/auth/google">
+            <button>Se connecter avec Google</button>
+        </a>
+        <p>
+            <a href="/auth/github">
+                <button>Se connecter avec GitHub</button>
+            </a>
+        </p>
+    </div>
 </body>
 </html>
