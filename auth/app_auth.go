@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/gorilla/sessions"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/github"
 	"golang.org/x/oauth2/google"
@@ -14,6 +15,7 @@ import (
 
 var GoogleOauthConfig *oauth2.Config
 var GithubOauthConfig *oauth2.Config
+var store = sessions.NewCookieStore([]byte("super-secret-key"))
 
 func InitOAuth() {
 	GoogleOauthConfig = &oauth2.Config{
