@@ -60,36 +60,49 @@ func GetPost(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(post)
 }
 func GetAllPosts(w http.ResponseWriter, r *http.Request) {
-	rows, err := auth.DB.Query("SELECT id, user_id, title, content, created_at FROM posts ORDER BY created_at DESC")
-	if err != nil {
-		http.Error(w, "Error retrieving posts", http.StatusInternalServerError)
-		return
-	}
-	defer rows.Close()
+    filter := r.URL.Query().Get("filter")
+    categoryID := r.URL.Query().Get("category_id")
+    userID, _ := auth.GetUserFromSession(r) 
 
-	var posts []struct {
-		ID        string
-		UserID    string
-		Title     string
-		Content   string
-		CreatedAt time.Time
-	}
-	for rows.Next() {
-		var post struct {
-			ID        string
-			UserID    string
-			Title     string
-			Content   string
-			CreatedAt time.Time
-		}
-		if err := rows.Scan(&post.ID, &post.UserID, &post.Title, &post.Content, &post.CreatedAt); err != nil {
-			http.Error(w, "Error reading post", http.StatusInternalServerError)
-			return
-		}
-		posts = append(posts, post)
-	}
-	json.NewEncoder(w).Encode(posts)
+    var rows *sql.Rows
+    var err error
+
+    if filter == "category" && categoryID != "" {
+        rows, err = auth.DB.Query("SELECT id, user_id, title, content, created_at FROM posts WHERE id IN (SELECT post_id FROM post_categories WHERE category_id = ?) ORDER BY created_at DESC", categoryID)
+    } else if filter == "my_posts" && userID != "" {
+        rows, err = auth.DB.Query("SELECT id, user_id, title, content, created_at FROM posts WHERE user_id = ? ORDER BY created_at DESC", userID)
+    } else if filter == "liked" && userID != "" {
+        rows, err = auth.DB.Query("SELECT id, user_id, title, content, created_at FROM posts WHERE id IN (SELECT post_id FROM likes WHERE user_id = ? AND type = 'like') ORDER BY created_at DESC", userID)
+    } else {
+        rows, err = auth.DB.Query("SELECT id, user_id, title, content, created_at FROM posts ORDER BY created_at DESC")
+    }
+    if err != nil {
+        http.Error(w, "Error retrieving posts", http.StatusInternalServerError)
+        return
+    }
+    defer rows.Close()
+
+    type Post struct {
+        ID        string    `json:"ID"`
+        UserID    string    `json:"UserID"`
+        Title     string    `json:"Title"`
+        Content   string    `json:"Content"`
+        CreatedAt time.Time `json:"CreatedAt"`
+    }
+    var posts []Post
+    for rows.Next() {
+        var post Post
+        if err := rows.Scan(&post.ID, &post.UserID, &post.Title, &post.Content, &post.CreatedAt); err != nil {
+            http.Error(w, "Error reading post", http.StatusInternalServerError)
+            return
+        }
+        posts = append(posts, post)
+    }
+
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(posts)
 }
+
 func DeletePost(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)

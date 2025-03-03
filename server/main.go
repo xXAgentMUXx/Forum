@@ -40,7 +40,6 @@ func main() {
 	http.HandleFunc("/comment/delete", forum.DeleteComment)
 	http.HandleFunc("/like/post", forum.Like_Post)
 	http.HandleFunc("/likes", forum.GetLikesAndDislike)
-	http.HandleFunc("/posts/filter", forum.GetFilteredPosts)
 	http.Handle("/web/", http.StripPrefix("/web/", http.FileServer(http.Dir("web"))))
 
 	fmt.Println("Server started on :8080")

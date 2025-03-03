@@ -22,21 +22,21 @@ function fetchPosts(filter = "all", categoryID = "") {
                     let postElement = document.createElement("div");
                     postElement.classList.add("post");
                     postElement.innerHTML = `
-                        <h2>${post.Title}</h2>
-                        <h2>${post.Title}</h2>
-                        <p>${post.Content}</p>
-                        <button onclick="likePost('${post.ID}', 'like')">👍 <span id="like-count-${post.ID}">${likeCount}</span></button>
-                        <button onclick="likePost('${post.ID}', 'dislike')">👎 <span id="dislike-count-${post.ID}">${dislikeCount}</span></button>
-                        <button onclick="showCommentForm('${post.ID}')">Commenter</button>
-                        <button onclick="deletePost('${post.ID}')">🗑️ Supprimer</button>
-                        <div id="comments-${post.ID}"></div>
-                        <div id="comment-form-${post.ID}" style="display:none;">
+                            <h2>${post.Title}</h2>
+                            <p>${post.Content}</p>
+                            <button onclick="likePost('${post.ID}', 'like')">👍 <span id="like-count-${post.ID}">${likeCount}</span></button>
+                            <button onclick="likePost('${post.ID}', 'dislike')">👎 <span id="dislike-count-${post.ID}">${dislikeCount}</span></button>
+                            <button onclick="showCommentForm('${post.ID}')">Commenter</button>
+                            <button onclick="deletePost('${post.ID}')">🗑️ Supprimer</button>
+                            <div id="comments-${post.ID}"></div>
+
+                            <div id="comment-form-${post.ID}" style="display:none;">
                             <textarea id="comment-text-${post.ID}" placeholder="Votre commentaire"></textarea>
                             <button onclick="postComment('${post.ID}')">Publier</button>
-                        </div>
-                    `;
-                    postContainer.appendChild(postElement);
-                    fetchComments(post.ID);
+                            </div>
+                            `;
+                            postContainer.appendChild(postElement);
+                            fetchComments(post.ID);
                 });
             });
         });

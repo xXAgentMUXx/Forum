@@ -10,15 +10,16 @@
     <a href="/" class="logout">Deconnect</a>
     <h1>Forum</h1>
     <div>
-        <label for="filter">Filtrer par :</label>
-        <select id="filter" onchange="applyFilter()">
-            <option value="all">Tous les posts</option>
-            <option value="category">Catégorie</option>
-            <option value="my_posts">Mes posts</option>
-            <option value="liked">Posts likés</option>
-        </select>
-        <input type="text" id="category-id" placeholder="ID de la catégorie" style="display:none;">
+    <label for="filter">Filtrer par :</label>
+    <select id="filter" onchange="applyFilter()">
+        <option value="all">Tous les posts</option>
+        <option value="category">Catégorie</option>
+        <option value="my_posts">Mes posts</option>
+        <option value="liked">Posts likés</option>
+    </select>
+    <input type="text" id="category-id" placeholder="ID de la catégorie" style="display:none;">
     </div>
+
     <button onclick="showPostForm()">Créer un nouveau post</button>
     <div id="post-form" style="display: none;">
         <h2>Nouveau Post</h2>
