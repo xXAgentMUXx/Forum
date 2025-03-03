@@ -96,7 +96,12 @@ function likePost(postID, type) {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: `id=${postID}&type=${type}`
-    }).then(() => fetchPosts());
+    }).then(() => {
+        fetchLikeDislikeCount(postID, "post", (likeCount, dislikeCount) => {
+            document.getElementById(`like-count-${postID}`).innerText = likeCount;
+            document.getElementById(`dislike-count-${postID}`).innerText = dislikeCount;
+        });
+    });
 }
 function showPostForm() {
     let form = document.getElementById("post-form");

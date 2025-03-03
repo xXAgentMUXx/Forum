@@ -18,20 +18,26 @@ function fetchComments(postID) {
             let commentContainer = document.getElementById(`comments-${postID}`);
             commentContainer.innerHTML = "";
             comments.forEach(comment => {
-                fetchLikeDislikeCount(comment.ID, "comment", (likeCount, dislikeCount) => {
+                let commentID = comment.ID || comment.id; 
+                fetchLikeDislikeCount(commentID, "comment", (likeCount, dislikeCount) => {
+                    likeCount = likeCount || 0;
+                    dislikeCount = dislikeCount || 0;
+
                     let commentElement = document.createElement("div");
                     commentElement.classList.add("comment");
                     commentElement.innerHTML = `
                         <p>${comment.content}</p>
-                        <button onclick="likeComment('${comment.id}', 'like')">👍 <span id="like-count-${comment.id}">${likeCount}</span></button>
-                        <button onclick="likeComment('${comment.id}', 'dislike')">👎 <span id="dislike-count-${comment.id}">${dislikeCount}</span></button>
-                        <button onclick="deleteComment('${comment.id}')">🗑️ Supprimer</button>
+                        <button onclick="likeComment('${commentID}', 'like')">👍 <span id="like-count-${commentID}">${likeCount}</span></button>
+                        <button onclick="likeComment('${commentID}', 'dislike')">👎 <span id="dislike-count-${commentID}">${dislikeCount}</span></button>
+                        <button onclick="deleteComment('${commentID}')">🗑️ Supprimer</button>
                     `;
                     commentContainer.appendChild(commentElement);
                 });
             });
-        });
+        })
+        .catch(error => console.error("Erreur lors du chargement des commentaires :", error));
 }
+
 
 function likeComment(commentID, type) {
     fetch("/like/comment", {

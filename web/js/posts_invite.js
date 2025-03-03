@@ -38,14 +38,10 @@ function fetchPosts(filter = "all", categoryID = "") {
 }
 
 function fetchLikeDislikeCount(contentID, contentType, callback) {
-    if (typeof callback !== "function") {
-        console.error("Erreur : callback non défini pour fetchLikeDislikeCount");
-        return;
-    }
-
     fetch(`/likes?id=${contentID}&type=${contentType}`)
         .then(response => response.json())
         .then(data => {
+            console.log(`Likes pour ${contentType} ${contentID} :`, data); 
             callback(data.likes || 0, data.dislikes || 0);
         })
         .catch(error => {
@@ -53,7 +49,18 @@ function fetchLikeDislikeCount(contentID, contentType, callback) {
             callback(0, 0);
         });
 }
-
+function likePost(postID, type) {
+    fetch("/like/post", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: `id=${postID}&type=${type}`
+    }).then(() => {
+        fetchLikeDislikeCount(postID, "post", (likeCount, dislikeCount) => {
+            document.getElementById(`like-count-${postID}`).innerText = likeCount;
+            document.getElementById(`dislike-count-${postID}`).innerText = dislikeCount;
+        });
+    });
+}
 function showPostForm() {
     let form = document.getElementById("post-form");
     if (form.style.display === "none") {

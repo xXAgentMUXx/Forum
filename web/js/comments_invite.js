@@ -18,19 +18,25 @@ function fetchComments(postID) {
             let commentContainer = document.getElementById(`comments-${postID}`);
             commentContainer.innerHTML = "";
             comments.forEach(comment => {
-                fetchLikeDislikeCount(comment.ID, "comment", (likeCount, dislikeCount) => {
+                let commentID = comment.ID || comment.id; 
+                fetchLikeDislikeCount(commentID, "comment", (likeCount, dislikeCount) => {
+                    likeCount = likeCount || 0;
+                    dislikeCount = dislikeCount || 0;
+
                     let commentElement = document.createElement("div");
                     commentElement.classList.add("comment");
                     commentElement.innerHTML = `
                         <p>${comment.content}</p>
-                       👍 <span id="like-count-${comment.id}">${likeCount}</span></button>
-                       👎 <span id="dislike-count-${comment.id}">${dislikeCount}</span></button>
-                        
+                        👍 <span id="like-count-${commentID}">${likeCount}</span>
+                        👎 <span id="dislike-count-${commentID}">${dislikeCount}</span>
                     `;
                     commentContainer.appendChild(commentElement);
                 });
             });
-        });
+        })
+        .catch(error => console.error("Erreur lors du chargement des commentaires :", error));
 }
+
+
 
 
