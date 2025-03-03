@@ -33,6 +33,7 @@ func main() {
 	http.HandleFunc("/forum_invite", forum.ServeForumInvite)
 	http.HandleFunc("/post/create", forum.CreatePost)
 	http.HandleFunc("/posts", forum.GetAllPosts)
+	http.HandleFunc("/categories", forum.GetCategories)
 	http.HandleFunc("/comments", forum.GetComments)
 	http.HandleFunc("/like/comment", forum.LikeComment)
 	http.HandleFunc("/comment/create", forum.CreateComment)

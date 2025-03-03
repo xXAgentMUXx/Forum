@@ -3,6 +3,7 @@ package forum
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -84,6 +85,32 @@ func GetLikesAndDislike(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]int{"likes": likeCount, "dislikes": dislikeCount})
+}
+func GetCategories(w http.ResponseWriter, r *http.Request) {
+	rows, err := auth.DB.Query("SELECT id, name FROM categories")
+	if err != nil {
+		http.Error(w, "Error retrieving categories", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	type Category struct {
+		ID   string `json:"id"`
+		Name string `json:"name"`
+	}
+	var categories []Category
+	for rows.Next() {
+		var category Category
+		if err := rows.Scan(&category.ID, &category.Name); err != nil {
+			http.Error(w, "Error reading categories", http.StatusInternalServerError)
+			return
+		}
+		categories = append(categories, category)
+	}
+	fmt.Println("📌 Catégories récupérées :", categories)
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(categories)
 }
 
 

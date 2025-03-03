@@ -17,7 +17,11 @@
         <option value="my_posts">Mes posts</option>
         <option value="liked">Posts likés</option>
     </select>
-    <input type="text" id="category-id" placeholder="ID de la catégorie" style="display:none;">
+    <label for="post-category">Catégorie :</label>
+    <select id="post-category-dropdown">
+        <option value="">Sélectionner une catégorie</option>
+    </select>    
+    
     </div>
 
     <button onclick="showPostForm()">Créer un nouveau post</button>
@@ -25,6 +29,10 @@
         <h2>Nouveau Post</h2>
         <input type="text" id="post-title" placeholder="Titre">
         <textarea id="post-content" placeholder="Contenu"></textarea>
+        <label for="post-category">Catégorie :</label>
+        <select id="post-category">
+            <option value="">Sélectionner une catégorie</option>
+        </select>
         <button onclick="createPost()">Publier</button>
     </div>
     

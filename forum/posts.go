@@ -11,29 +11,37 @@ import (
 	"Forum/auth"
 )
 func CreatePost(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
-		return
-	}
-	userID, err := auth.GetUserFromSession(r)
-	if err != nil {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
-		return
-	}
-	title := r.FormValue("title")
-	content := r.FormValue("content")
-	if title == "" || content == "" {
-		http.Error(w, "Title and text are required", http.StatusBadRequest)
-		return
-	}
-	postID := uuid.New().String()
-	_, err = auth.DB.Exec("INSERT INTO posts (id, user_id, title, content, created_at) VALUES (?, ?, ?, ?, ?)", postID, userID, title, content, time.Now())
-	if err != nil {
-		http.Error(w, "Error at creating post", http.StatusInternalServerError)
-		return
-	}
+    if r.Method != http.MethodPost {
+        http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+        return
+    }
+    userID, err := auth.GetUserFromSession(r)
+    if err != nil {
+        http.Error(w, "Unauthorized", http.StatusUnauthorized)
+        return
+    }
+    title := r.FormValue("title")
+    content := r.FormValue("content")
+    categoryID := r.FormValue("category_id") 
 
-	fmt.Fprintf(w, "Post created successfully!")
+    if title == "" || content == "" || categoryID == "" {
+        http.Error(w, "Title, content, and category are required", http.StatusBadRequest)
+        return
+    }
+    postID := uuid.New().String()
+    _, err = auth.DB.Exec("INSERT INTO posts (id, user_id, title, content, created_at) VALUES (?, ?, ?, ?, ?)", postID, userID, title, content, time.Now())
+
+    if err != nil {
+        http.Error(w, "Error creating post", http.StatusInternalServerError)
+        return
+    }
+    _, err = auth.DB.Exec("INSERT INTO post_categories (post_id, category_id) VALUES (?, ?)", postID, categoryID)
+    if err != nil {
+        http.Error(w, "Error linking post to category", http.StatusInternalServerError)
+        return
+    }
+
+    fmt.Fprintf(w, "Post created successfully!")
 }
 
 func GetPost(w http.ResponseWriter, r *http.Request) {

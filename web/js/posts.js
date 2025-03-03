@@ -11,7 +11,7 @@ function fetchPosts(filter = "all", categoryID = "") {
     } else if (filter === "liked") {
         url += "?filter=liked";
     }
-
+    loadCategories();
     fetch(url)
         .then(response => response.json())
         .then(posts => {
@@ -41,6 +41,28 @@ function fetchPosts(filter = "all", categoryID = "") {
             });
         });
 }
+
+function loadCategories() {
+    fetch("/categories")
+        .then(response => response.json())
+        .then(categories => {
+            let categorySelect = document.getElementById("post-category-dropdown");
+            if (!categorySelect) {
+                console.error("❌ Erreur : Le menu de sélection des catégories est introuvable !");
+                return;
+            }
+
+            categorySelect.innerHTML = `<option value="">Sélectionner une catégorie</option>`;
+            categories.forEach(category => {
+                categorySelect.innerHTML += `<option value="${category.id}">${category.name}</option>`;
+            });
+        })
+        .catch(error => console.error("❌ Erreur lors du chargement des catégories :", error));
+}
+document.addEventListener("DOMContentLoaded", function() {
+    loadCategories();
+});
+
 
 function fetchLikeDislikeCount(contentID, contentType, callback) {
     if (typeof callback !== "function") {
@@ -84,10 +106,17 @@ function deletePost(postID) {
 function createPost() {
     let title = document.getElementById("post-title").value;
     let content = document.getElementById("post-content").value;
+    let category = document.getElementById("post-category").value; 
+
+    if (!category) {
+        alert("Veuillez sélectionner une catégorie.");
+        return;
+    }
+
     fetch("/post/create", {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: `title=${encodeURIComponent(title)}&content=${encodeURIComponent(content)}`
+        body: `title=${encodeURIComponent(title)}&content=${encodeURIComponent(content)}&category_id=${encodeURIComponent(category)}`
     }).then(() => fetchPosts());
 }
 
