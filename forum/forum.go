@@ -3,7 +3,6 @@ package forum
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -107,7 +106,6 @@ func GetCategories(w http.ResponseWriter, r *http.Request) {
 		}
 		categories = append(categories, category)
 	}
-	fmt.Println("📌 Catégories récupérées :", categories)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(categories)

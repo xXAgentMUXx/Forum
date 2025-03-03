@@ -46,16 +46,21 @@ function loadCategories() {
     fetch("/categories")
         .then(response => response.json())
         .then(categories => {
-            let categorySelect = document.getElementById("post-category-dropdown");
-            if (!categorySelect) {
-                console.error("❌ Erreur : Le menu de sélection des catégories est introuvable !");
+
+            let filterSelect = document.getElementById("post-category-dropdown");
+            let postFormSelect = document.getElementById("post-category");
+
+            if (!filterSelect || !postFormSelect) {
+                console.error("❌ Erreur : Un des menus de sélection des catégories est introuvable !");
                 return;
             }
-
-            categorySelect.innerHTML = `<option value="">Sélectionner une catégorie</option>`;
+            let optionsHTML = `<option value="">Sélectionner une catégorie</option>`;
             categories.forEach(category => {
-                categorySelect.innerHTML += `<option value="${category.id}">${category.name}</option>`;
+                optionsHTML += `<option value="${category.id}">${category.name}</option>`;
             });
+            filterSelect.innerHTML = optionsHTML;   
+            postFormSelect.innerHTML = optionsHTML; 
+
         })
         .catch(error => console.error("❌ Erreur lors du chargement des catégories :", error));
 }
@@ -83,15 +88,20 @@ function fetchLikeDislikeCount(contentID, contentType, callback) {
 
 function applyFilter() {
     let filter = document.getElementById("filter").value;
-    let categoryInput = document.getElementById("category-id");
-    
-    if (filter === "category") {
-        categoryInput.style.display = "inline";
-    } else {
-        categoryInput.style.display = "none";
+    let categorySelect = document.getElementById("post-category-dropdown"); 
+
+    if (!categorySelect) {
+        console.error("❌ Erreur : Le menu déroulant de catégorie est introuvable !");
+        return;
     }
-    
-    let categoryID = categoryInput.value;
+
+    let categoryID = categorySelect.value;
+
+    if (filter === "category" && !categoryID) {
+        console.warn("⚠️ Aucune catégorie sélectionnée.");
+        return;
+    }
+
     fetchPosts(filter, categoryID);
 }
 
