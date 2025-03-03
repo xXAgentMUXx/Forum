@@ -27,5 +27,4 @@ func Forum() {
 }
 
 func HandlerForum(w http.ResponseWriter, r *http.Request) {
-
 }
