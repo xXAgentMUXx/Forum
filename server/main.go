@@ -1,65 +1,47 @@
 package main
 
 import (
-	"database/sql"
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 
-	_"github.com/mattn/go-sqlite3"
-	"github.com/gorilla/mux"
-	"Forum/auth"
+	auth "Forum/auth"
+	forum "Forum/forum"
+
+	"github.com/joho/godotenv"
+	_ "github.com/mattn/go-sqlite3"
 )
 
-var db *sql.DB
-
 func main() {
-	var err error
-	db, err = sql.Open("sqlite3", "./forum.db")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
+	err := godotenv.Load()
+    if err != nil {
+        log.Fatal("Error loading .env file")
+    }
+	auth.InitDB()
+	auth.InitOAuth()
 
+	fmt.Println("GitHub Client ID:", auth.GithubOauthConfig.ClientID)
 	
-	r := mux.NewRouter()
+	http.HandleFunc("/", auth.ServeHTML)
+	http.HandleFunc("/register", auth.RegisterUser)
+	http.HandleFunc("/login", auth.LoginUser)
+	http.HandleFunc("/auth/google", auth.AuthGoogle)
+	http.HandleFunc("/auth/github", auth.AuthGithub)
+	http.HandleFunc("/auth/callback/google", auth.GoogleCallback)
+	http.HandleFunc("/auth/callback/github", auth.GithubCallback)
+	http.HandleFunc("/forum", forum.ServeForum)
+	http.HandleFunc("/post/create", forum.CreatePost)
+	http.HandleFunc("/posts", forum.GetAllPosts)
+	http.HandleFunc("/comments", forum.GetComments)
+	http.HandleFunc("/like/comment", forum.LikeComment)
+	http.HandleFunc("/comment/create", forum.CreateComment)
+	http.HandleFunc("/post/delete", forum.DeletePost)
+	http.HandleFunc("/comment/delete", forum.DeleteComment)
+	http.HandleFunc("/like/post", forum.Like_Post)
+	http.HandleFunc("/likes", forum.GetLikesAndDislike)
+	http.HandleFunc("/posts/filter", forum.GetFilteredPosts)
+	http.Handle("/web/", http.StripPrefix("/web/", http.FileServer(http.Dir("web"))))
 
-	r.HandleFunc("/register", RegisterHandler).Methods("POST")
-	r.HandleFunc("/login", LoginHandler).Methods("POST")
-
-	fmt.Println("Serveur démarré sur :8080")
-	log.Fatal(http.ListenAndServe(":8080", r))
-}
-
-func RegisterHandler(w http.ResponseWriter, r *http.Request) {
-	var user auth.User
-	err := json.NewDecoder(r.Body).Decode(&user)
-	if err != nil {
-		http.Error(w, "Données invalides", http.StatusBadRequest)
-		return
-	}
-	err = auth.RegisterUser(db, user.Email, user.Username, user.Password)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]string{"message": "Register Complete"})
-}
-func LoginHandler(w http.ResponseWriter, r *http.Request) {
-	var creds struct {
-		Email    string `json:"E-mail"`
-		Password string `json:"Password"`
-	}
-	err := json.NewDecoder(r.Body).Decode(&creds)
-	if err != nil {
-		http.Error(w, "Invalides Data", http.StatusBadRequest)
-		return
-	}
-	err = auth.LoginUser(db, creds.Email, creds.Password, w)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnauthorized)
-		return
-	}
+	fmt.Println("Server started on :8080")
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }

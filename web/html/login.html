@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion</title>
+    <link rel="stylesheet" href="/web/css/login.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Connexion</h1>
+        <form action="/login" method="POST">
+            <input type="email" name="email" required placeholder="Email">
+            <input type="password" name="password" required placeholder="Mot de passe">
+            <button type="submit">Se connecter</button>
+        </form>
+        <a href="/auth/google">
+            <button>Se connecter avec Google</button>
+        </a>
+        <p>
+            <a href="/auth/github">
+                <button>Se connecter avec GitHub</button>
+            </a>
+        </p>
+    </div>
+</body>
+</html>
