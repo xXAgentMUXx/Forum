@@ -22,6 +22,7 @@ function fetchPosts(filter = "all", categoryID = "") {
                     let postElement = document.createElement("div");
                     postElement.classList.add("post");
                     postElement.innerHTML = `
+                    
                             <h2>${post.Title}</h2>
                             <p>${post.Content}</p>
                             <button onclick="likePost('${post.ID}', 'like')">👍 <span id="like-count-${post.ID}">${likeCount}</span></button>
@@ -46,7 +47,6 @@ function loadCategories() {
     fetch("/categories")
         .then(response => response.json())
         .then(categories => {
-
             let filterSelect = document.getElementById("post-category-dropdown");
             let postFormSelect = document.getElementById("post-category");
 
@@ -54,20 +54,17 @@ function loadCategories() {
                 console.error("❌ Erreur : Un des menus de sélection des catégories est introuvable !");
                 return;
             }
+
             let optionsHTML = `<option value="">Sélectionner une catégorie</option>`;
             categories.forEach(category => {
                 optionsHTML += `<option value="${category.id}">${category.name}</option>`;
             });
+
             filterSelect.innerHTML = optionsHTML;   
             postFormSelect.innerHTML = optionsHTML; 
-
         })
         .catch(error => console.error("❌ Erreur lors du chargement des catégories :", error));
 }
-document.addEventListener("DOMContentLoaded", function() {
-    loadCategories();
-});
-
 
 function fetchLikeDislikeCount(contentID, contentType, callback) {
     if (typeof callback !== "function") {
@@ -88,23 +85,19 @@ function fetchLikeDislikeCount(contentID, contentType, callback) {
 
 function applyFilter() {
     let filter = document.getElementById("filter").value;
-    let categorySelect = document.getElementById("post-category-dropdown"); 
+    let categorySelect = document.getElementById("post-category-dropdown");
 
     if (!categorySelect) {
         console.error("❌ Erreur : Le menu déroulant de catégorie est introuvable !");
         return;
     }
-
     let categoryID = categorySelect.value;
 
-    if (filter === "category" && !categoryID) {
-        console.warn("⚠️ Aucune catégorie sélectionnée.");
-        return;
+    if (filter !== "category") {
+        categoryID = "";  
     }
-
     fetchPosts(filter, categoryID);
 }
-
 function deletePost(postID) {
     fetch("/post/delete", {
         method: "POST",

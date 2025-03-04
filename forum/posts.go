@@ -74,16 +74,16 @@ func GetAllPosts(w http.ResponseWriter, r *http.Request) {
 
     var rows *sql.Rows
     var err error
-
-    if filter == "category" && categoryID != "" {
-        rows, err = auth.DB.Query("SELECT id, user_id, title, content, created_at FROM posts WHERE id IN (SELECT post_id FROM post_categories WHERE category_id = ?) ORDER BY created_at DESC", categoryID)
-    } else if filter == "my_posts" && userID != "" {
-        rows, err = auth.DB.Query("SELECT id, user_id, title, content, created_at FROM posts WHERE user_id = ? ORDER BY created_at DESC", userID)
-    } else if filter == "liked" && userID != "" {
-        rows, err = auth.DB.Query("SELECT id, user_id, title, content, created_at FROM posts WHERE id IN (SELECT post_id FROM likes WHERE user_id = ? AND type = 'like') ORDER BY created_at DESC", userID)
-    } else {
-        rows, err = auth.DB.Query("SELECT id, user_id, title, content, created_at FROM posts ORDER BY created_at DESC")
-    }
+	
+   if filter == "category" && categoryID != "" {
+    rows, err = auth.DB.Query("SELECT id, user_id, title, content, created_at FROM posts WHERE id IN (SELECT post_id FROM post_categories WHERE category_id = ?) ORDER BY created_at DESC", categoryID)
+} else if filter == "my_posts" && userID != "" {
+    rows, err = auth.DB.Query("SELECT id, user_id, title, content, created_at FROM posts WHERE user_id = ? ORDER BY created_at DESC", userID)
+} else if filter == "liked" && userID != "" {
+    rows, err = auth.DB.Query("SELECT id, user_id, title, content, created_at FROM posts WHERE id IN (SELECT post_id FROM likes WHERE user_id = ? AND type = 'like') ORDER BY created_at DESC", userID)
+} else {
+    rows, err = auth.DB.Query("SELECT id, user_id, title, content, created_at FROM posts ORDER BY created_at DESC")
+}
     if err != nil {
         http.Error(w, "Error retrieving posts", http.StatusInternalServerError)
         return
