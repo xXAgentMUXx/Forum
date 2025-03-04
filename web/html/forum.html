@@ -17,10 +17,12 @@
         <option value="my_posts">Mes posts</option>
         <option value="liked">Posts likés</option>
     </select>
-    <label for="post-category">Catégorie :</label>
-    <select id="post-category-dropdown" onchange="applyFilter()">
-        <option value="">Sélectionner une catégorie</option>
-    </select>   
+    <div id="category-filter-container" style="display: none;">
+        <label for="post-category">Catégorie :</label>
+        <select id="post-category-dropdown" onchange="applyFilter()">
+            <option value="">Sélectionner une catégorie</option>
+        </select>    
+    </div>   
     
     </div>
 

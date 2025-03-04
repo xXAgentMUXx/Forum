@@ -91,10 +91,17 @@ function applyFilter() {
         console.error("❌ Erreur : Le menu déroulant de catégorie est introuvable !");
         return;
     }
+    let categoryContainer = categorySelect.parentElement; 
+
+    if (filter === "category") {
+        categoryContainer.style.display = "inline-block"; 
+    } else {
+        categoryContainer.style.display = "none"; 
+    }
     let categoryID = categorySelect.value;
 
     if (filter !== "category") {
-        categoryID = "";  
+        categoryID = ""; 
     }
     fetchPosts(filter, categoryID);
 }
