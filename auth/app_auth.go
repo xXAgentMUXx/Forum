@@ -20,14 +20,14 @@ func InitOAuth() {
 	GoogleOauthConfig = &oauth2.Config{
 		ClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
 		ClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
-		RedirectURL:  "http://localhost:8080/auth/callback/google",
+		RedirectURL:  "https://localhost:8080/auth/callback/google",
 		Scopes:       []string{"email", "profile"},
 		Endpoint:     google.Endpoint,
 	}
 	GithubOauthConfig = &oauth2.Config{
 		ClientID:     os.Getenv("GITHUB_CLIENT_ID"),
 		ClientSecret: os.Getenv("GITHUB_CLIENT_SECRET"),
-		RedirectURL:  "http://localhost:8080/auth/callback/github",
+		RedirectURL:  "https://localhost:8080/auth/callback/github",
 		Scopes:       []string{"user:email"},
 		Endpoint:     github.Endpoint,
 	}
