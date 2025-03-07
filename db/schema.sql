@@ -65,3 +65,9 @@ CREATE TABLE sessions (
     expires_at  TIMESTAMP NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS ip_rate_limit (
+    ip_address TEXT PRIMARY KEY,
+    last_request_time DATETIME,
+    request_count INTEGER
+);

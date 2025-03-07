@@ -25,6 +25,11 @@ func InitDB() {
 		user_id TEXT,
 		expires_at DATETIME
 	)`)
+    DB.Exec(`CREATE TABLE IF NOT EXISTS rate_limit (
+        user_id TEXT PRIMARY KEY,
+        last_request_time DATETIME,
+        request_count INTEGER
+    )`)
 }
 func ServeHTML(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "web/html/"+r.URL.Path)
@@ -80,10 +85,15 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
         http.Error(w, "Invalid credentials", http.StatusUnauthorized)
         return
     }
+    if err := CheckRateLimit(userID); err != nil {
+        http.Error(w, "Too many login attempts. Please try again later.", http.StatusTooManyRequests)
+        return
+    }
     if err = bcrypt.CompareHashAndPassword([]byte(storedPassword), []byte(password)); err != nil {
         http.Error(w, "Invalid Password", http.StatusUnauthorized)
         return
     }
+    DB.Exec("DELETE FROM rate_limit WHERE user_id = ?", userID)
 
     sessionID := uuid.New().String()
     expiration := time.Now().Add(24 * time.Hour)
@@ -100,7 +110,6 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
         Secure:   true,
         SameSite: http.SameSiteStrictMode,
     })
-
     http.Redirect(w, r, "/forum", http.StatusSeeOther)
 }
 func GetUserFromSession(r *http.Request) (string, error) {
@@ -169,5 +178,28 @@ func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
         fmt.Println("✅ AuthMiddleware: Accès accordé à l'utilisateur", user)
         next(w, r)
     }
+}
+func CheckRateLimit(userID string) error {
+    var lastRequestTime time.Time
+    var requestCount int
+
+    err := DB.QueryRow("SELECT last_request_time, request_count FROM rate_limit WHERE user_id = ?", userID).Scan(&lastRequestTime, &requestCount)
+    if err != nil && err != sql.ErrNoRows {
+        return fmt.Errorf("Error checking rate limit: %v", err)
+    }
+    if err == sql.ErrNoRows || time.Since(lastRequestTime) > time.Minute {
+        _, err := DB.Exec("REPLACE INTO rate_limit (user_id, last_request_time, request_count) VALUES (?, ?, ?)", userID, time.Now(), 1)
+        if err != nil {
+            return fmt.Errorf("Error resetting rate limit: %v", err)
+        }
+    } else if requestCount >= 5 { 
+        return fmt.Errorf("Rate limit exceeded")
+    } else {
+        _, err := DB.Exec("UPDATE rate_limit SET request_count = request_count + 1 WHERE user_id = ?", userID)
+        if err != nil {
+            return fmt.Errorf("Error updating rate limit: %v", err)
+        }
+    }
+    return nil
 }
 

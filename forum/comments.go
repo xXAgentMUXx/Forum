@@ -20,6 +20,11 @@ func CreateComment(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
+	err = auth.CheckRateLimit(userID)
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusTooManyRequests)
+        return
+    }
 	postID := r.FormValue("post_id")
 	content := r.FormValue("content")
 	if postID == "" || content == "" {

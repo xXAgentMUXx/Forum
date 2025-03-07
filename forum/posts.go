@@ -20,6 +20,11 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
         http.Error(w, "Unauthorized", http.StatusUnauthorized)
         return
     }
+	err = auth.CheckRateLimit(userID)
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusTooManyRequests)
+        return
+    }
     title := r.FormValue("title")
     content := r.FormValue("content")
     categoryID := r.FormValue("category_id") 
@@ -35,6 +40,7 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
         http.Error(w, "Error creating post", http.StatusInternalServerError)
         return
     }
+	
     _, err = auth.DB.Exec("INSERT INTO post_categories (post_id, category_id) VALUES (?, ?)", postID, categoryID)
     if err != nil {
         http.Error(w, "Error linking post to category", http.StatusInternalServerError)

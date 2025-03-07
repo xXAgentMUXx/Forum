@@ -45,7 +45,7 @@ func main() {
 
 	fmt.Println("Server started on https://localhost:8080")
 
-	err = http.ListenAndServeTLS(":8080", "cert.pem", "key.pem", nil)
+	err = http.ListenAndServeTLS(":8080", "localhost+2.pem", "localhost+2-key.pem", nil)
 	if err != nil {
 		log.Fatal("HTTPS Error: ", err)
 	}
