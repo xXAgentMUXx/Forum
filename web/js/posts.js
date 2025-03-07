@@ -1,7 +1,19 @@
 document.addEventListener("DOMContentLoaded", function() {
     fetchPosts();
+    checkSessionAndFetchPosts()
 });
-
+function checkSessionAndFetchPosts() {
+    fetch("/check-session") 
+        .then(response => {
+            if (response.status === 401) { 
+                window.location.href = "/login";
+            } 
+        })
+        .catch(error => {
+            console.error("Erreur lors de la vérification de la session:", error);
+            window.location.href = "/login"; 
+        });
+}
 function fetchPosts(filter = "all", categoryID = "") {
     let url = "/posts";
     if (filter === "category" && categoryID) {

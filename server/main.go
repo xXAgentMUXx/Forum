@@ -14,22 +14,22 @@ import (
 
 func main() {
 	err := godotenv.Load()
-    if err != nil {
-        log.Fatal("Error loading .env file")
-    }
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
 	auth.InitDB()
 	auth.InitOAuth()
 
-	fmt.Println("GitHub Client ID:", auth.GithubOauthConfig.ClientID)
-	
 	http.HandleFunc("/", auth.ServeHTML)
 	http.HandleFunc("/register", auth.RegisterUser)
 	http.HandleFunc("/login", auth.LoginUser)
+	http.HandleFunc("/logout", auth.LogoutUser)
+	http.HandleFunc("/check-session", auth.CheckSession)
 	http.HandleFunc("/auth/google", auth.AuthGoogle)
 	http.HandleFunc("/auth/github", auth.AuthGithub)
 	http.HandleFunc("/auth/callback/google", auth.GoogleCallback)
 	http.HandleFunc("/auth/callback/github", auth.GithubCallback)
-	http.HandleFunc("/forum", forum.ServeForum)
+	http.HandleFunc("/forum", auth.AuthMiddleware(forum.ServeForum))
 	http.HandleFunc("/forum_invite", forum.ServeForumInvite)
 	http.HandleFunc("/post/create", forum.CreatePost)
 	http.HandleFunc("/posts", forum.GetAllPosts)
@@ -43,6 +43,12 @@ func main() {
 	http.HandleFunc("/likes", forum.GetLikesAndDislike)
 	http.Handle("/web/", http.StripPrefix("/web/", http.FileServer(http.Dir("web"))))
 
-	fmt.Println("Server started on :8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	fmt.Println("Server started on https://localhost:8080")
+
+	err = http.ListenAndServeTLS(":8080", "cert.pem", "key.pem", nil)
+	if err != nil {
+		log.Fatal("HTTPS Error: ", err)
+	}
 }
+
+

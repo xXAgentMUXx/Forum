@@ -106,7 +106,6 @@ func GetCategories(w http.ResponseWriter, r *http.Request) {
 		}
 		categories = append(categories, category)
 	}
-
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(categories)
 }

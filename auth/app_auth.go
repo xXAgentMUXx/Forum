@@ -98,16 +98,6 @@ func GithubCallback(w http.ResponseWriter, r *http.Request) {
 	session.Save(r, w)
 	http.Redirect(w, r, "/forum", http.StatusSeeOther)
 }
-func AuthMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		session, _ := store.Get(r, "session-name")
-		if _, ok := session.Values["email"]; !ok {
-			http.Error(w, "Access denied", http.StatusUnauthorized)
-			return
-		}
 
-		next.ServeHTTP(w, r)
-	})
-}
 
 
