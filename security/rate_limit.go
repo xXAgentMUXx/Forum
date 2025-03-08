@@ -14,6 +14,11 @@ type RateLimiter struct {
 	limit  int           
 	window time.Duration 
 }
+type LoginLimiter struct {
+	attempts map[string]int       
+	lockout  map[string]time.Time 
+	mu       sync.Mutex
+}
 
 func NewRateLimiter(limit int, window time.Duration) *RateLimiter {
 	rl := &RateLimiter{
@@ -27,7 +32,6 @@ func NewRateLimiter(limit int, window time.Duration) *RateLimiter {
 			rl.cleanup()
 		}
 	}()
-
 	return rl
 }
 
@@ -72,4 +76,44 @@ func (rl *RateLimiter) cleanup() {
 			rl.visits[ip] = validTimes
 		}
 	}
+}
+
+func NewLoginLimiter() *LoginLimiter {
+	return &LoginLimiter{
+		attempts: make(map[string]int),
+		lockout:  make(map[string]time.Time),
+	}
+}
+
+func (ll *LoginLimiter) CheckLock(ip string) (bool, time.Duration) {
+	ll.mu.Lock()
+	defer ll.mu.Unlock()
+
+	if lockUntil, found := ll.lockout[ip]; found {
+		if time.Now().Before(lockUntil) {
+			return true, time.Until(lockUntil)
+		}
+		delete(ll.lockout, ip) 
+	}
+	return false, 0
+}
+func (ll *LoginLimiter) FailedAttempt(ip string) time.Duration {
+	ll.mu.Lock()
+	defer ll.mu.Unlock()
+
+	ll.attempts[ip]++
+
+	if ll.attempts[ip] > 5 { 
+		timeout := time.Duration(30*1<<int(ll.attempts[ip]-5)) * time.Second
+		ll.lockout[ip] = time.Now().Add(timeout)
+		return timeout
+	}
+
+	return 0
+}
+func (ll *LoginLimiter) Reset(ip string) {
+	ll.mu.Lock()
+	defer ll.mu.Unlock()
+	delete(ll.attempts, ip)
+	delete(ll.lockout, ip)
 }

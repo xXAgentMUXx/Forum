@@ -8,6 +8,8 @@ import (
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
+    security "Forum/security"
+
 )
 
 var DB *sql.DB
@@ -73,13 +75,17 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 	}
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }
+var loginLimiter = security.NewLoginLimiter()
+
 func LoginUser(w http.ResponseWriter, r *http.Request) {
     if r.Method == http.MethodGet {
         http.ServeFile(w, r, "web/html/login.html")
         return
     }
-    if r.Method != http.MethodPost {
-        http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+    ip := r.RemoteAddr 
+
+    if blocked, remaining := loginLimiter.CheckLock(ip); blocked {
+        http.Error(w, fmt.Sprintf("Trop de tentatives. Réessayez dans %v secondes.", int(remaining.Seconds())), http.StatusTooManyRequests)
         return
     }
     email := r.FormValue("email")
@@ -88,13 +94,28 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
     var userID, storedPassword string
     err := DB.QueryRow("SELECT id, password FROM users WHERE email = ?", email).Scan(&userID, &storedPassword)
     if err != nil {
-        http.Error(w, "Invalid credentials", http.StatusUnauthorized)
+        time.Sleep(4 * time.Second) 
+        timeout := loginLimiter.FailedAttempt(ip) 
+        if timeout > 0 {
+            http.Error(w, fmt.Sprintf("Trop de tentatives. Réessayez dans %v secondes.", int(timeout.Seconds())), http.StatusTooManyRequests)
+        } else {
+            http.Error(w, "Invalid credentials", http.StatusUnauthorized)
+        }
         return
     }
     if err = bcrypt.CompareHashAndPassword([]byte(storedPassword), []byte(password)); err != nil {
-        http.Error(w, "Invalid Password", http.StatusUnauthorized)
+        time.Sleep(4 * time.Second) 
+        timeout := loginLimiter.FailedAttempt(ip) 
+
+        if timeout > 0 {
+            http.Error(w, fmt.Sprintf("Trop de tentatives. Réessayez dans %v secondes.", int(timeout.Seconds())), http.StatusTooManyRequests)
+        } else {
+            http.Error(w, "Invalid Password", http.StatusUnauthorized)
+        }
         return
     }
+    loginLimiter.Reset(ip) 
+
     DB.Exec("DELETE FROM rate_limit WHERE user_id = ?", userID)
 
     sessionID := uuid.New().String()
@@ -112,8 +133,11 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
         Secure:   true,
         SameSite: http.SameSiteStrictMode,
     })
+    fmt.Println("✅ Connexion réussie, redirection vers /forum")
     http.Redirect(w, r, "/forum", http.StatusSeeOther)
 }
+
+
 func GetUserFromSession(r *http.Request) (string, error) {
     cookie, err := r.Cookie("session_token")
     if err != nil {
