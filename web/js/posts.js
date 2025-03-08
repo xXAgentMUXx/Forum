@@ -23,7 +23,6 @@ function fetchPosts(filter = "all", categoryID = "") {
     } else if (filter === "liked") {
         url += "?filter=liked";
     }
-
     loadCategories();
     fetch(url)
     .then(response => response.json())
@@ -74,7 +73,6 @@ function loadCategories() {
                 console.error("❌ Erreur : Un des menus de sélection des catégories est introuvable !");
                 return;
             }
-
             let optionsHTML = `<option value="">Sélectionner une catégorie</option>`;
             categories.forEach(category => {
                 optionsHTML += `<option value="${category.id}">${category.name}</option>`;
@@ -143,7 +141,6 @@ async function createPost() {
         alert("Veuillez remplir tous les champs.");
         return;
     }
-    
     const formData = new FormData();
     formData.append("title", title);
     formData.append("content", content);
@@ -152,13 +149,11 @@ async function createPost() {
     if (imageInput.files.length > 0) {
         formData.append("image", imageInput.files[0]);
     }
-    
     try {
         const response = await fetch("/post/create", {
             method: "POST",
             body: formData
         });
-        
         if (response.ok) {
             alert("Post créé avec succès !");
             fetchPosts(); 
@@ -192,4 +187,28 @@ function showPostForm() {
         form.style.display = "none";
     }
 }
+function previewImage(event) {
+    const file = event.target.files[0];
+    const preview = document.getElementById("preview-img");
+    const previewContainer = document.getElementById("image-preview");
+
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+            previewContainer.style.display = "block";
+        };
+        reader.readAsDataURL(file);
+    } else {
+        previewContainer.style.display = "none";
+    }
+}
+
+function removeImage() {
+    const fileInput = document.getElementById("post-image");
+    const previewContainer = document.getElementById("image-preview");
+    fileInput.value = ""; 
+    previewContainer.style.display = "none"; 
+}
+
 

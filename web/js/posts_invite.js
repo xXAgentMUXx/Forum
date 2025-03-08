@@ -21,11 +21,18 @@ function fetchPosts(filter = "all", categoryID = "") {
                 fetchLikeDislikeCount(post.ID, "post", function(likeCount, dislikeCount) {
                     let postElement = document.createElement("div");
                     postElement.classList.add("post");
+                    let imageHtml = "";
+                    if (post.ImagePath && post.ImagePath.trim() !== "") {
+                        imageHtml = `<img src="/${post.ImagePath}" alt="Post Image"  class="post-image">`;
+                    }
                     postElement.innerHTML = `
                         <h2>${post.Title}</h2>
                         <p>${post.Content}</p>
+                        ${imageHtml}
+                        <div class="like-dislike-buttons"> 
                         👍 <span id="like-count-${post.ID}">${likeCount}</span></button>
                         👎 <span id="dislike-count-${post.ID}">${dislikeCount}</span></button>
+                        </div>
                         <div id="comments-${post.ID}"></div>
                         <div id="comment-form-${post.ID}" style="display:none;">
                         </div>

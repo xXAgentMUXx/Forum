@@ -37,8 +37,13 @@
             <option value="">Sélectionner une catégorie</option>
         </select>
         <label for="post-image">Ajouter une image :</label>
-        <input type="file" id="post-image" accept="image/jpeg, image/png, image/gif">
+        <input type="file" id="post-image" accept="image/jpeg, image/png, image/gif" onchange="previewImage(event)">
+        <div id="image-preview" style="display:none;">
+        <img id="preview-img" src="" alt="Prévisualisation de l'image">
+        <span id="remove-img" onclick="removeImage()">✖</span>
+        </div>
         <button onclick="createPost()">Publier</button>
+        </div>
     </div>
     
     <div id="posts"></div>
