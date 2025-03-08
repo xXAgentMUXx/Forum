@@ -71,3 +71,9 @@ CREATE TABLE IF NOT EXISTS ip_rate_limit (
     last_request_time DATETIME,
     request_count INTEGER
 );
+
+CREATE TABLE post_images (
+    post_id TEXT NOT NULL,
+    image_path TEXT NOT NULL,
+    FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
+);

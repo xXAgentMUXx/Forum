@@ -30,7 +30,13 @@ func InitDB() {
         last_request_time DATETIME,
         request_count INTEGER
     )`)
+    DB.Exec(`CREATE TABLE IF NOT EXISTS post_images (
+		post_id TEXT NOT NULL,
+		image_path TEXT NOT NULL,
+		FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
+	)`);
 }
+
 func ServeHTML(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "web/html/"+r.URL.Path)
 }
@@ -160,25 +166,23 @@ func CheckSession(w http.ResponseWriter, r *http.Request) {
 func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
     return func(w http.ResponseWriter, r *http.Request) {
         fmt.Println("AuthMiddleware: Vérification en cours...")
-
-        cookie, err := r.Cookie("session_token")
-        if err != nil {
-            fmt.Println("❌ Aucun cookie reçu, redirection vers /login")
-            http.Redirect(w, r, "/login", http.StatusFound)
+        userID, err := GetUserFromSession(r)
+        if err == nil {
+            fmt.Println("✅ AuthMiddleware: Accès accordé à l'utilisateur", userID)
+            next(w, r)
             return
         }
-        fmt.Println("✅ Cookie reçu :", cookie.Value)
-
-        user, err := GetUserFromSession(r)
-        if err != nil {
-            fmt.Println("❌ Session invalide, redirection vers /login")
-            http.Redirect(w, r, "/login", http.StatusFound)
+        session, _ := store.Get(r, "session-name")
+        if email, ok := session.Values["email"].(string); ok && email != "" {
+            fmt.Println("✅ AuthMiddleware: Accès accordé à l'utilisateur OAuth", email)
+            next(w, r)
             return
         }
-        fmt.Println("✅ AuthMiddleware: Accès accordé à l'utilisateur", user)
-        next(w, r)
+        fmt.Println("❌ AuthMiddleware: Aucun utilisateur authentifié, redirection vers /login")
+        http.Redirect(w, r, "/login", http.StatusFound)
     }
 }
+
 func CheckRateLimit(userID string) error {
     var lastRequestTime time.Time
     var requestCount int
@@ -202,4 +206,6 @@ func CheckRateLimit(userID string) error {
     }
     return nil
 }
+
+
 
