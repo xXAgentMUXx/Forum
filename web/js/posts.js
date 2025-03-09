@@ -155,7 +155,6 @@ async function createPost() {
             body: formData
         });
         if (response.ok) {
-            alert("Post créé avec succès !");
             fetchPosts(); 
         } else {
             const errorMessage = await response.text();

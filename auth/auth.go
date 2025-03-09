@@ -5,11 +5,10 @@ import (
 	"fmt"
 	"net/http"
 	"time"
-
+    
+	security "Forum/security"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
-    security "Forum/security"
-
 )
 
 var DB *sql.DB
@@ -136,7 +135,6 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
     fmt.Println("✅ Connexion réussie, redirection vers /forum")
     http.Redirect(w, r, "/forum", http.StatusSeeOther)
 }
-
 
 func GetUserFromSession(r *http.Request) (string, error) {
     cookie, err := r.Cookie("session_token")
