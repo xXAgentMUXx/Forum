@@ -82,7 +82,6 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
         return
     }
     ip := r.RemoteAddr 
-
     if blocked, remaining := loginLimiter.CheckLock(ip); blocked {
         http.Error(w, fmt.Sprintf("Trop de tentatives. Réessayez dans %v secondes.", int(remaining.Seconds())), http.StatusTooManyRequests)
         return
@@ -137,16 +136,38 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 
 func GetUserFromSession(r *http.Request) (string, error) {
     cookie, err := r.Cookie("session_token")
-    if err != nil {
-        return "", fmt.Errorf("Aucun cookie de session trouvé")
+    if err == nil {
+        var userID string
+        err = DB.QueryRow("SELECT user_id FROM sessions WHERE id = ?", cookie.Value).Scan(&userID)
+        if err == nil {
+            fmt.Println("✅ [DEBUG] Utilisateur trouvé via session_token:", userID)
+            return userID, nil
+        }
     }
-    var userID string
-    err = DB.QueryRow("SELECT user_id FROM sessions WHERE id = ?", cookie.Value).Scan(&userID)
-    if err != nil {
-        fmt.Println("❌ Session non trouvée en base pour :", cookie.Value)
-        return "", fmt.Errorf("Session invalide")
+    session, _ := store.Get(r, "session-name")
+    email, ok := session.Values["email"].(string)
+    fmt.Println("🛠️ [DEBUG] Email trouvé en session OAuth :", email)
+
+    if ok && email != "" {
+        var userID string
+        err := DB.QueryRow("SELECT id FROM users WHERE email = ?", email).Scan(&userID)
+        
+        if err == sql.ErrNoRows {
+            fmt.Println("🛠️ [DEBUG] Création d'un nouvel utilisateur OAuth :", email)
+            userID = uuid.New().String()
+            _, err = DB.Exec("INSERT INTO users (id, email, username, password) VALUES (?, ?, ?, NULL)", userID, email, email)
+            if err != nil {
+                fmt.Println("❌ [DEBUG] Erreur lors de la création de l'utilisateur OAuth :", err)
+                return "", fmt.Errorf("Erreur lors de la création de l'utilisateur OAuth")
+            }
+            fmt.Println("✅ [DEBUG] Utilisateur OAuth ajouté en base :", userID)
+        } else if err != nil {
+            return "", fmt.Errorf("Erreur de base de données")
+        }
+        return userID, nil
     }
-    return userID, nil
+    fmt.Println("❌ [DEBUG] Aucune session valide trouvée")
+    return "", fmt.Errorf("Aucune session valide trouvée")
 }
 
 func CleanupExpiredSessions() {

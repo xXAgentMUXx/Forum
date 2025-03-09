@@ -43,91 +43,91 @@ func AuthGithub(w http.ResponseWriter, r *http.Request) {
 }
 
 func GoogleCallback(w http.ResponseWriter, r *http.Request) {
-	code := r.URL.Query().Get("code")
-	if code == "" {
-		http.Error(w, "Code not found", http.StatusBadRequest)
-		return
-	}
-	token, err := GoogleOauthConfig.Exchange(context.Background(), code)
-	if err != nil {
-		http.Error(w, "Failed to exchange token", http.StatusInternalServerError)
-		return
-	}
-	client := GoogleOauthConfig.Client(context.Background(), token)
-	resp, err := client.Get("https://www.googleapis.com/oauth2/v2/userinfo")
-	if err != nil {
-		http.Error(w, "Failed to get user info", http.StatusInternalServerError)
-		return
-	}
-	defer resp.Body.Close()
+    code := r.URL.Query().Get("code")
+    if code == "" {
+        http.Error(w, "Code not found", http.StatusBadRequest)
+        return
+    }
+    token, err := GoogleOauthConfig.Exchange(context.Background(), code)
+    if err != nil {
+        http.Error(w, "Failed to exchange token", http.StatusInternalServerError)
+        return
+    }
+    client := GoogleOauthConfig.Client(context.Background(), token)
+    resp, err := client.Get("https://www.googleapis.com/oauth2/v2/userinfo")
+    if err != nil {
+        http.Error(w, "Failed to get user info", http.StatusInternalServerError)
+        return
+    }
+    defer resp.Body.Close()
 
-	var userInfo map[string]interface{}
-	json.NewDecoder(resp.Body).Decode(&userInfo)
+    var userInfo map[string]interface{}
+    json.NewDecoder(resp.Body).Decode(&userInfo)
 
-	email, ok := userInfo["email"].(string)
-	if !ok || email == "" {
-		http.Error(w, "No email found for this Google account", http.StatusUnauthorized)
-		return
-	}
-	session, _ := store.Get(r, "session-name")
-	session.Values["email"] = email
-	err = session.Save(r, w) 
-	if err != nil {
-		fmt.Println("❌ Erreur sauvegarde session:", err)
-	}
-	http.Redirect(w, r, "/forum", http.StatusSeeOther)
+    email, ok := userInfo["email"].(string)
+    if !ok || email == "" {
+        http.Error(w, "No email found in Google response", http.StatusUnauthorized)
+        return
+    }
+    session, _ := store.Get(r, "session-name")
+    session.Values["email"] = email
+    session.Save(r, w)
+    http.Redirect(w, r, "/forum", http.StatusSeeOther)
 }
+
 func GithubCallback(w http.ResponseWriter, r *http.Request) {
-	code := r.URL.Query().Get("code")
-	if code == "" {
-		http.Error(w, "Code not found", http.StatusBadRequest)
-		return
-	}
-	token, err := GithubOauthConfig.Exchange(context.Background(), code)
-	if err != nil {
-		http.Error(w, "Failed to exchange token", http.StatusInternalServerError)
-		return
-	}
-	client := GithubOauthConfig.Client(context.Background(), token)
-	resp, err := client.Get("https://api.github.com/user")
-	if err != nil {
-		http.Error(w, "Failed to get user info", http.StatusInternalServerError)
-		return
-	}
-	defer resp.Body.Close()
+    code := r.URL.Query().Get("code")
+    if code == "" {
+        http.Error(w, "Code not found", http.StatusBadRequest)
+        return
+    }
 
-	var userInfo map[string]interface{}
-	json.NewDecoder(resp.Body).Decode(&userInfo)
+    token, err := GithubOauthConfig.Exchange(context.Background(), code)
+    if err != nil {
+        http.Error(w, "Failed to exchange token", http.StatusInternalServerError)
+        return
+    }
 
-	email, ok := userInfo["email"].(string)
-	if !ok || email == "" {
-		resp, err := client.Get("https://api.github.com/user/emails")
-		if err != nil {
-			http.Error(w, "Failed to get user emails", http.StatusInternalServerError)
-			return
-		}
-		defer resp.Body.Close()
+    client := GithubOauthConfig.Client(context.Background(), token)
+    resp, err := client.Get("https://api.github.com/user")
+    if err != nil {
+        http.Error(w, "Failed to get user info", http.StatusInternalServerError)
+        return
+    }
+    defer resp.Body.Close()
 
-		var emails []map[string]interface{}
-		json.NewDecoder(resp.Body).Decode(&emails)
+    var userInfo map[string]interface{}
+    json.NewDecoder(resp.Body).Decode(&userInfo)
 
-		for _, e := range emails {
-			if e["primary"].(bool) {
-				email = e["email"].(string)
-				break
-			}
-		}
-	}
-	if email == "" {
-		http.Error(w, "No email found for this GitHub account", http.StatusUnauthorized)
-		return
-	}
-	session, _ := store.Get(r, "session-name")
-	session.Values["email"] = email
-	err = session.Save(r, w)
-	if err != nil {
-		fmt.Println("❌ Erreur sauvegarde session:", err)
-	}
-	http.Redirect(w, r, "/forum", http.StatusSeeOther)
+    email, ok := userInfo["email"].(string)
+    if !ok || email == "" {
+        fmt.Println("❌ [DEBUG] Email manquant dans la réponse GitHub. Tentative de récupération des emails...")
+        
+        resp, err := client.Get("https://api.github.com/user/emails")
+        if err != nil {
+            http.Error(w, "Failed to get user emails", http.StatusInternalServerError)
+            return
+        }
+        defer resp.Body.Close()
+
+        var emails []map[string]interface{}
+        json.NewDecoder(resp.Body).Decode(&emails)
+
+        for _, e := range emails {
+            if primary, ok := e["primary"].(bool); ok && primary {
+                email, _ = e["email"].(string)
+                break
+            }
+        }
+    }
+    if email == "" {
+        http.Error(w, "No email found in GitHub response", http.StatusUnauthorized)
+        return
+    }
+    session, _ := store.Get(r, "session-name")
+    session.Values["email"] = email
+    session.Save(r, w)
+    http.Redirect(w, r, "/forum", http.StatusSeeOther)
 }
+
 
