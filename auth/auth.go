@@ -132,7 +132,6 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
         Secure:   true,
         SameSite: http.SameSiteStrictMode,
     })
-    fmt.Println("✅ Connexion réussie, redirection vers /forum")
     http.Redirect(w, r, "/forum", http.StatusSeeOther)
 }
 
@@ -165,25 +164,40 @@ func LogoutUser(w http.ResponseWriter, r *http.Request) {
     http.SetCookie(w, &http.Cookie{
         Name:     "session_token",
         Value:    "",
-        Expires:  time.Now().Add(0 * time.Second),
+        Expires:  time.Now().Add(-1 * time.Hour), 
         HttpOnly: true,
         Secure:   true,
         SameSite: http.SameSiteStrictMode,
     })
+    session, _ := store.Get(r, "session-name")
+    session.Values["email"] = nil
+    session.Options.MaxAge = -1 
+    err = session.Save(r, w)
+    if err != nil {
+        fmt.Println("❌ Erreur lors de la suppression de la session OAuth:", err)
+    }
     http.Redirect(w, r, "/login", http.StatusFound)
 }
 
 func CheckSession(w http.ResponseWriter, r *http.Request) {
-    _, err := GetUserFromSession(r)
-    if err != nil {
-        http.Error(w, "Unauthorized", http.StatusUnauthorized) 
+    userID, err := GetUserFromSession(r)
+    if err == nil {
+        fmt.Println("✅ CheckSession: Utilisateur connecté avec session classique", userID)
+        w.WriteHeader(http.StatusOK)
         return
     }
-    w.WriteHeader(http.StatusOK) 
+    session, _ := store.Get(r, "session-name")
+    if email, ok := session.Values["email"].(string); ok && email != "" {
+        fmt.Println("✅ CheckSession: Utilisateur connecté via OAuth", email)
+        w.WriteHeader(http.StatusOK)
+        return
+    }
+    http.Error(w, "Unauthorized", http.StatusUnauthorized)
 }
+
 func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
     return func(w http.ResponseWriter, r *http.Request) {
-        fmt.Println("AuthMiddleware: Vérification en cours...")
+        fmt.Println("🔍 AuthMiddleware: Vérification en cours...")
         userID, err := GetUserFromSession(r)
         if err == nil {
             fmt.Println("✅ AuthMiddleware: Accès accordé à l'utilisateur", userID)
@@ -191,6 +205,8 @@ func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
             return
         }
         session, _ := store.Get(r, "session-name")
+        fmt.Println("🛠️ Contenu de la session:", session.Values)
+
         if email, ok := session.Values["email"].(string); ok && email != "" {
             fmt.Println("✅ AuthMiddleware: Accès accordé à l'utilisateur OAuth", email)
             next(w, r)

@@ -32,9 +32,9 @@
         <h2>Nouveau Post</h2>
         <input type="text" id="post-title" placeholder="Titre">
         <textarea id="post-content" placeholder="Contenu"></textarea>
-        <label for="post-category">Catégorie :</label>
-        <select id="post-category">
-            <option value="">Sélectionner une catégorie</option>
+        <label for="post-category">Catégories :</label>
+        <select id="post-category" multiple>
+        <option value="">Sélectionner une ou plusieurs catégories</option>
         </select>
         <label for="post-image">Ajouter une image :</label>
         <input type="file" id="post-image" accept="image/jpeg, image/png, image/gif" onchange="previewImage(event)">

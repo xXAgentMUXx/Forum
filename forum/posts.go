@@ -74,10 +74,10 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 	}
 	title := r.FormValue("title")
 	content := r.FormValue("content")
-	categoryID := r.FormValue("category_id")
+	categories := r.FormValue("categories") 
 
-	if title == "" || content == "" || categoryID == "" {
-		http.Error(w, "Title, content, and category are required", http.StatusBadRequest)
+	if title == "" || content == "" || categories == "" {
+		http.Error(w, "Title, content, and at least one category are required", http.StatusBadRequest)
 		return
 	}
 	postID := uuid.New().String()
@@ -85,7 +85,7 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 
 	file, fileHeader, err := r.FormFile("image")
 	if err == nil {
-		defer file.Close() 
+		defer file.Close()
 		imagePath, err = saveImage(fileHeader)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -104,11 +104,13 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	_, err = auth.DB.Exec("INSERT INTO post_categories (post_id, category_id) VALUES (?, ?)", postID, categoryID)
-	fmt.Println("catégorie ok")
-	if err != nil {
-		http.Error(w, "Error linking post to category", http.StatusInternalServerError)
-		return
+	categoryIDs := strings.Split(categories, ",")
+	for _, categoryID := range categoryIDs {
+		_, err = auth.DB.Exec("INSERT INTO post_categories (post_id, category_id) VALUES (?, ?)", postID, strings.TrimSpace(categoryID))
+		if err != nil {
+			http.Error(w, "Error linking post to categories", http.StatusInternalServerError)
+			return
+		}
 	}
 	fmt.Fprintf(w, "Post created successfully!")
 }
@@ -147,15 +149,14 @@ func GetAllPosts(w http.ResponseWriter, r *http.Request) {
 
     var rows *sql.Rows
     var err error
-
     query := `
-        SELECT p.id, p.user_id, p.title, p.content, p.created_at, COALESCE(pi.image_path, '') 
+        SELECT DISTINCT p.id, p.user_id, p.title, p.content, p.created_at, COALESCE(pi.image_path, '')
         FROM posts p
         LEFT JOIN post_images pi ON p.id = pi.post_id
+        LEFT JOIN post_categories pc ON p.id = pc.post_id
     `
-
     if filter == "category" && categoryID != "" {
-        query += " WHERE p.id IN (SELECT post_id FROM post_categories WHERE category_id = ?) ORDER BY p.created_at DESC"
+        query += " WHERE pc.category_id = ? ORDER BY p.created_at DESC"
         rows, err = auth.DB.Query(query, categoryID)
     } else if filter == "my_posts" && userID != "" {
         query += " WHERE p.user_id = ? ORDER BY p.created_at DESC"

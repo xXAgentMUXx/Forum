@@ -134,18 +134,20 @@ function deletePost(postID) {
 async function createPost() {
     const title = document.getElementById("post-title").value;
     const content = document.getElementById("post-content").value;
-    const category = document.getElementById("post-category").value;
+    const categorySelect = document.getElementById("post-category");
     const imageInput = document.getElementById("post-image");
+
+    let selectedCategories = Array.from(categorySelect.selectedOptions).map(option => option.value);
     
-    if (!title || !content || !category) {
+    if (!title || !content || selectedCategories.length === 0) {
         alert("Veuillez remplir tous les champs.");
         return;
     }
     const formData = new FormData();
     formData.append("title", title);
     formData.append("content", content);
-    formData.append("category_id", category);
-    
+    formData.append("categories", selectedCategories.join(",")); 
+
     if (imageInput.files.length > 0) {
         formData.append("image", imageInput.files[0]);
     }
