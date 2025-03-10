@@ -30,6 +30,7 @@ func main() {
 	mux.Handle("/register", limiter.Limit(http.HandlerFunc(auth.RegisterUser)))
 	mux.Handle("/login", limiter.Limit(http.HandlerFunc(auth.LoginUser)))
 	mux.Handle("/logout", limiter.Limit(http.HandlerFunc(auth.LogoutUser)))
+	mux.Handle("/edit_user", limiter.Limit(http.HandlerFunc(auth.HandleEditUser)))
 	mux.Handle("/check-session", limiter.Limit(http.HandlerFunc(auth.CheckSession)))
 	mux.Handle("/auth/google", limiter.Limit(http.HandlerFunc((auth.AuthGoogle))))
 	mux.Handle("/auth/github", limiter.Limit(http.HandlerFunc((auth.AuthGithub))))
