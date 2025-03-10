@@ -13,7 +13,7 @@ import (
 
 var db *sql.DB
 
-func Init() {
+func init() {
     var err error
     db, err = sql.Open("sqlite3", "./forum.db")
     if err != nil {
@@ -26,12 +26,12 @@ func ServeEditUserPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func EditUser(w http.ResponseWriter, r *http.Request) {
-    userID, err := GetUserFromSession(r)
-if err != nil {
-    http.Error(w, "You need to be logged in to edit your account", http.StatusUnauthorized)
-    return
-}
-
+    session, _ := store.Get(r, "user-session")
+    userID, ok := session.Values["user_id"].(string)
+    if !ok || userID == "" {
+        http.Error(w, "You need to be logged in to edit your account", http.StatusUnauthorized)
+        return
+    }
     if r.Method == http.MethodPost {
         username := r.FormValue("username")
         email := r.FormValue("email")
