@@ -123,6 +123,16 @@ function applyFilter() {
     }
     fetchPosts(filter, categoryID);
 }
+
+function cancelPostCreation() {
+    document.getElementById("post-form").style.display = "none";
+    document.getElementById("post-title").value = "";
+    document.getElementById("post-content").value = "";
+    document.getElementById("post-category").selectedIndex = 0;
+    document.getElementById("post-image").value = "";
+    document.getElementById("image-preview").style.display = "none";
+}
+
 function deletePost(postID) {
     fetch("/post/delete", {
         method: "POST",

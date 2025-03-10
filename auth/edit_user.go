@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"regexp"
+	"time"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -33,12 +34,12 @@ func EditUser(w http.ResponseWriter, r *http.Request) {
 	var count int
 	err = DB.QueryRow("SELECT COUNT(*) FROM users WHERE email = ? AND id != ?", email, userID).Scan(&count)
 	if err != nil {
-    http.Error(w, "Database error", http.StatusInternalServerError)
-    return
+		http.Error(w, "Database error", http.StatusInternalServerError)
+		return
 	}
 	if count > 0 {
-    http.Error(w, "Email already taken", http.StatusConflict)
-    return
+		http.Error(w, "Email already taken", http.StatusConflict)
+		return
 	}
 	updateQuery := "UPDATE users SET username = ?, email = ?"
 	args := []interface{}{username, email}
@@ -65,12 +66,31 @@ func EditUser(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "User updated successfully")
 }
 
+
 func updateSession(w http.ResponseWriter, r *http.Request, userID, email string) {
-	session, _ := store.Get(r, "session-name")
-	session.Values["userID"] = userID
-	session.Values["email"] = email
-	session.Save(r, w)
+	cookie, err := r.Cookie("session_token")
+	if err != nil {
+		http.Error(w, "Session not found", http.StatusUnauthorized)
+		return
+	}
+	var currentSessionID string
+	err = DB.QueryRow("SELECT id FROM sessions WHERE id = ?", cookie.Value).Scan(&currentSessionID)
+	if err != nil {
+		http.Error(w, "Invalid session", http.StatusUnauthorized)
+		return
+	}
+	_, err = DB.Exec("UPDATE sessions SET user_id = ?, email = ? WHERE id = ?", userID, email, cookie.Value)
+	http.SetCookie(w, &http.Cookie{
+		Name:     "session_token",
+		Value:    cookie.Value, 
+		Expires:  time.Now().Add(24 * time.Hour), 
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteStrictMode,
+	})
+	fmt.Println("Session updated successfully")
 }
+
 
 func isValidEmail(email string) bool {
 	re := regexp.MustCompile(`^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$`)
