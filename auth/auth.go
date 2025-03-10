@@ -75,7 +75,7 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 	userID := uuid.New().String()
 	_, err = DB.Exec("INSERT INTO users (id, email, username, password) VALUES (?, ?, ?, ?)", userID, email, username, string(hashedPassword))
 	if err != nil {
-		http.Error(w, "Error registering user", http.StatusInternalServerError)
+		http.Error(w, "Error registering user (pseudo already used)", http.StatusInternalServerError)
 		return
 	}
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
