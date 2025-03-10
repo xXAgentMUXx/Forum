@@ -1,9 +1,12 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"strings"
 	"time"
 
 	auth "Forum/auth"
@@ -11,19 +14,40 @@ import (
 
 	rate "Forum/security"
 
-	"github.com/joho/godotenv"
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func main() {
-	err := godotenv.Load()
+func loadEnvFile(filename string) {
+	file, err := os.Open(filename)
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		fmt.Println("Pas de fichier .env trouvé")
+		return
 	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.HasPrefix(line, "#") || !strings.Contains(line, "=") {
+			continue
+		}
+		parts := strings.SplitN(line, "=", 2)
+		key := strings.TrimSpace(parts[0])
+		value := strings.TrimSpace(parts[1])
+		os.Setenv(key, value)
+	}
+	if err := scanner.Err(); err != nil {
+		fmt.Println("❌ Erreur de lecture du fichier .env :", err)
+	}
+}
+
+func main() {
+	loadEnvFile(".env")
+
 	auth.InitDB()
 	auth.InitOAuth()
-	limiter := rate.NewRateLimiter(200, 60*time.Second) 
 
+	limiter := rate.NewRateLimiter(200, 60*time.Second) 
 	mux := http.NewServeMux()
 	
 	mux.Handle("/", limiter.Limit(http.HandlerFunc(auth.ServeHTML)))
@@ -51,12 +75,10 @@ func main() {
 	mux.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir("uploads"))))
 	mux.Handle("/web/", http.StripPrefix("/web/", http.FileServer(http.Dir("web"))))
 
-	fmt.Println("Server started on https://localhost:8080")
+	fmt.Println("✅ Serveur lancé sur https://localhost:8080")
 
-	err = http.ListenAndServeTLS(":8080", "localhost+2.pem", "localhost+2-key.pem", mux)
+	err := http.ListenAndServeTLS(":8080", "localhost+2.pem", "localhost+2-key.pem", mux)
 	if err != nil {
-		log.Fatal("HTTPS Error: ", err)
+		log.Fatal("❌ Erreur HTTPS :", err)
 	}
 }
-
-
