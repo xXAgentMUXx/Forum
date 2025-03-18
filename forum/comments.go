@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"Forum/auth"
+	
 )
 func CreateComment(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -40,6 +41,7 @@ func GetComments(w http.ResponseWriter, r *http.Request) {
         http.Error(w, "Post ID is required", http.StatusBadRequest)
         return
     }
+
     rows, err := auth.DB.Query("SELECT id, user_id, content, created_at FROM comments WHERE post_id = ? ORDER BY created_at ASC", postID)
     if err != nil {
         http.Error(w, "Error retrieving comments", http.StatusInternalServerError)

@@ -6,11 +6,15 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/google/uuid"
 	"Forum/auth"
+
+	"github.com/google/uuid"
 )
 func ServeForum(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "web/html/forum.html")
+}
+func ServeForumInvite(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "web/html/forum_invite.html")
 }
 func LikeContent(w http.ResponseWriter, r *http.Request, contentType string) {
 	if r.Method != http.MethodPost {
@@ -60,6 +64,7 @@ func LikeContent(w http.ResponseWriter, r *http.Request, contentType string) {
 func GetLikesAndDislike(w http.ResponseWriter, r *http.Request) {
 	contentID := r.URL.Query().Get("id")
 	contentType := r.URL.Query().Get("type")
+
 	if contentID == "" || (contentType != "post" && contentType != "comment") {
 		http.Error(w, "Invalid parameters", http.StatusBadRequest)
 		return
@@ -68,15 +73,41 @@ func GetLikesAndDislike(w http.ResponseWriter, r *http.Request) {
 	var query string
 
 	if contentType == "post" {
-		query = "SELECT COUNT(CASE WHEN type='like' THEN 1 END), COUNT(CASE WHEN type='dislike' THEN 1 END) FROM likes WHERE post_id = ?"
+		query = "SELECT COALESCE(COUNT(CASE WHEN type='like' THEN 1 END), 0), COALESCE(COUNT(CASE WHEN type='dislike' THEN 1 END), 0) FROM likes WHERE post_id = ?"
 	} else {
-		query = "SELECT COUNT(CASE WHEN type='like' THEN 1 END), COUNT(CASE WHEN type='dislike' THEN 1 END) FROM likes WHERE comment_id = ?"
+		query = "SELECT COALESCE(COUNT(CASE WHEN type='like' THEN 1 END), 0), COALESCE(COUNT(CASE WHEN type='dislike' THEN 1 END), 0) FROM likes WHERE comment_id = ?"
 	}
 	err := auth.DB.QueryRow(query, contentID).Scan(&likeCount, &dislikeCount)
 	if err != nil {
 		http.Error(w, "Error retrieving like count", http.StatusInternalServerError)
 		return
 	}
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]int{"likes": likeCount, "dislikes": dislikeCount})
 }
+func GetCategories(w http.ResponseWriter, r *http.Request) {
+	rows, err := auth.DB.Query("SELECT id, name FROM categories")
+	if err != nil {
+		http.Error(w, "Error retrieving categories", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	type Category struct {
+		ID   string `json:"id"`
+		Name string `json:"name"`
+	}
+	var categories []Category
+	for rows.Next() {
+		var category Category
+		if err := rows.Scan(&category.ID, &category.Name); err != nil {
+			http.Error(w, "Error reading categories", http.StatusInternalServerError)
+			return
+		}
+		categories = append(categories, category)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(categories)
+}
+
 

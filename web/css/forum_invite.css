@@ -72,43 +72,29 @@ body{
     border: none;
     background: #1e1e2e;
     color: white;
-}.post-buttons {
-    display: flex;
-    gap: 10px;
-    margin-top: 10px;
-}#image-preview {
-    position: relative;
-    display: inline-block;
-}#preview-img {
-    max-width: 200px;
-    height: auto;
+}.post {
+    background: #252535;
+    padding: 15px;
+    margin: 10px auto;
+    max-width: 600px;
     border-radius: 5px;
-}#remove-img {
-    position: absolute;
-    top: 5px;
-    right: 5px;
-    cursor: pointer;
-    font-size: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    text-align: left;
     color: white;
-    background-color: rgba(0, 0, 0, 0.5);
-    border-radius: 50%;
-    padding: 5px;
-    transition: background-color 0.3s;
-}#remove-img:hover {
-    background-color: rgba(0, 0, 0, 0.7);
-}.edit-profile {
-    position: fixed;
-        top: 10px;
-        right: 149px;
-        background: #007bbf;
-        color: white;
-        padding: 10px 15px;
-        text-decoration: none;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        font-weight: bold;
-        z-index: 1000; 
-}.edit-profile:hover {
-    background-color: #0056b3;
+}.post h2 {
+    color: #ffcc00;
+    margin: 0 0 10px;
+}.post-image {
+    width: 100%;  
+    max-width: 300px;  
+    margin: 0 auto;  
+    display: block;
+    margin-bottom: 10px;
+    margin-left: 10px; 
+}.like-dislike-buttons {
+    text-align: left;  
+    margin-top: 10px;  
+}.like-dislike-buttons span {
+    margin: 0 10px;  
 }
+

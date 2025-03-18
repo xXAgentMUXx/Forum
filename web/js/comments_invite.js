@@ -1,10 +1,8 @@
 document.addEventListener("DOMContentLoaded", function() {
 });
-
 function showCommentForm(postID) {
     document.getElementById(`comment-form-${postID}`).style.display = "block";
 }
-
 function postComment(postID) {
     let content = document.getElementById(`comment-text-${postID}`).value;
     fetch("/comment/create", {
@@ -13,7 +11,6 @@ function postComment(postID) {
         body: `post_id=${postID}&content=${encodeURIComponent(content)}`
     }).then(() => fetchComments(postID));
 }
-
 function fetchComments(postID) {
     fetch(`/comments?post_id=${postID}`)
         .then(response => response.json())
@@ -30,9 +27,8 @@ function fetchComments(postID) {
                     commentElement.classList.add("comment");
                     commentElement.innerHTML = `
                         <p>${comment.content}</p>
-                        <button onclick="likeComment('${commentID}', 'like')">👍 <span id="like-count-${commentID}">${likeCount}</span></button>
-                        <button onclick="likeComment('${commentID}', 'dislike')">👎 <span id="dislike-count-${commentID}">${dislikeCount}</span></button>
-                        <button onclick="deleteComment('${commentID}')">🗑️ Supprimer</button>
+                        👍 <span id="like-count-${commentID}">${likeCount}</span>
+                        👎 <span id="dislike-count-${commentID}">${dislikeCount}</span>
                     `;
                     commentContainer.appendChild(commentElement);
                 });
@@ -41,27 +37,6 @@ function fetchComments(postID) {
         .catch(error => console.error("Erreur lors du chargement des commentaires :", error));
 }
 
-function likeComment(commentID, type) {
-    fetch("/like/comment", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: `id=${commentID}&type=${type}`
-    }).then(() => {
-        fetchLikeDislikeCount(commentID, "comment", (likeCount, dislikeCount) => {
-            document.getElementById(`like-count-${commentID}`).innerText = likeCount;
-            document.getElementById(`dislike-count-${commentID}`).innerText = dislikeCount;
-        });
-    });
-}
 
-function deleteComment(commentID) {
-    fetch("/comment/delete", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: `id=${commentID}`
-    }).then(() => fetchPosts());
-}
-function cancelCommentCreation(postID) {
-    document.getElementById(`comment-form-${postID}`).style.display = "none";
-    document.getElementById(`comment-text-${postID}`).value = "";
-}
+
+
