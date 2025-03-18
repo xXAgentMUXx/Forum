@@ -17,6 +17,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+// Function to load the env file
 func loadEnvFile(filename string) {
 	file, err := os.Open(filename)
 	if err != nil {
@@ -25,9 +26,11 @@ func loadEnvFile(filename string) {
 	}
 	defer file.Close()
 
+	// Use a scanner to read the file
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
+		//Skip lines that are comments to have no errors
 		if strings.HasPrefix(line, "#") || !strings.Contains(line, "=") {
 			continue
 		}
@@ -36,21 +39,27 @@ func loadEnvFile(filename string) {
 		value := strings.TrimSpace(parts[1])
 		os.Setenv(key, value)
 	}
+	// Check for errors
 	if err := scanner.Err(); err != nil {
 		fmt.Println("❌ Erreur de lecture du fichier .env :", err)
 	}
 }
 
+// Function that start the server
 func main() {
 	loadEnvFile(".env")
 
+	// Initialize the authentication and database
 	auth.InitDB()
 	auth.InitOAuth()
 
+	// Create a rate limiter
 	limiter := rate.NewRateLimiter(200, 60*time.Second) 
+	// Create a new HTTP multiplexer
 	mux := http.NewServeMux()
 	
-	mux.Handle("/", limiter.Limit(http.HandlerFunc(auth.ServeHTML)))
+	// Define routes and associate them with aithmidlleware and with rate limiting
+	mux.Handle("/", limiter.Limit(http.HandlerFunc(auth.ServeHTML)))   
 	mux.Handle("/register", limiter.Limit(http.HandlerFunc(auth.RegisterUser)))
 	mux.Handle("/login", limiter.Limit(http.HandlerFunc(auth.LoginUser)))
 	mux.Handle("/logout", limiter.Limit(http.HandlerFunc(auth.LogoutUser)))
@@ -75,8 +84,10 @@ func main() {
 	mux.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir("uploads"))))
 	mux.Handle("/web/", http.StripPrefix("/web/", http.FileServer(http.Dir("web"))))
 
+	// Print a message indicating the server is running (debug)
 	fmt.Println("✅ Serveur lancé sur https://localhost:8080") // Commande Docker :  sudo docker compose up --build
 
+	// Start the server on port 8080 with the provided certificates for HTTPS
 	err := http.ListenAndServeTLS(":8080", "localhost+2.pem", "localhost+2-key.pem", mux)
 	if err != nil {
 		log.Fatal("❌ Erreur HTTPS :", err)
