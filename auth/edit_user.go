@@ -82,7 +82,7 @@ func updateSession(w http.ResponseWriter, r *http.Request, userID, email string)
 	// Retrieve the session cookie
 	cookie, err := r.Cookie("session_token")
 	if err != nil {
-		http.Error(w, "Session not found", http.StatusUnauthorized)
+		http.Error(w, "Session not found (not authorized from non-user or user connected from github or Google to modify their account)", http.StatusUnauthorized)
 		return
 	}
 	// Query the database 

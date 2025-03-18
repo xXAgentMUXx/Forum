@@ -38,15 +38,14 @@ func InitOAuth() {
 // AuthGoogle initiates the Google OAuth
 func AuthGoogle(w http.ResponseWriter, r *http.Request) {
 // Generate the Google login URL and redirect the user
-	url := GoogleOauthConfig.AuthCodeURL("state")
+	url := GoogleOauthConfig.AuthCodeURL("state", oauth2.AccessTypeOffline, oauth2.ApprovalForce)
 	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 }
 
 // AuthGithub initiates the Github OAuth
 func AuthGithub(w http.ResponseWriter, r *http.Request) {
-	// Generate the Google login URL and redirect the user
-	url := GithubOauthConfig.AuthCodeURL("state", oauth2.AccessTypeOffline)
-	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
+    url := GithubOauthConfig.AuthCodeURL("state") + "&prompt=consent"
+    http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 }
 
 // GoogleCallback handles the callback
