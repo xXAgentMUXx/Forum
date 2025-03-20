@@ -1,10 +1,13 @@
+// Event listener that triggers when the DOM content is fully loaded
 document.addEventListener("DOMContentLoaded", function() {
 });
 
+// Function to display the comment form for a specific post
 function showCommentForm(postID) {
     document.getElementById(`comment-form-${postID}`).style.display = "block";
 }
 
+// Function to post a comment for a specific post
 function postComment(postID) {
     let content = document.getElementById(`comment-text-${postID}`).value;
     fetch("/comment/create", {
@@ -14,8 +17,9 @@ function postComment(postID) {
     }).then(() => fetchComments(postID));
 }
 
+// Function to fetch and display comments
 function fetchComments(postID) {
-    fetch(`/comments?post_id=${postID}`)
+    fetch(`/comments?post_id=${postID}`) // Fetch comments from the server
         .then(response => response.json())
         .then(comments => {
             let commentContainer = document.getElementById(`comments-${postID}`);
@@ -26,6 +30,7 @@ function fetchComments(postID) {
                     likeCount = likeCount || 0;
                     dislikeCount = dislikeCount || 0;
 
+                    // Create a new comment element
                     let commentElement = document.createElement("div");
                     commentElement.classList.add("comment");
                     commentElement.innerHTML = `
@@ -34,6 +39,7 @@ function fetchComments(postID) {
                         <button onclick="likeComment('${commentID}', 'dislike')">👎 <span id="dislike-count-${commentID}">${dislikeCount}</span></button>
                         <button onclick="deleteComment('${commentID}')">🗑️ Supprimer</button>
                     `;
+                    // Append the new comment to the container
                     commentContainer.appendChild(commentElement);
                 });
             });
@@ -41,6 +47,7 @@ function fetchComments(postID) {
         .catch(error => console.error("Erreur lors du chargement des commentaires :", error));
 }
 
+// Function to like or dislike a comment
 function likeComment(commentID, type) {
     fetch("/like/comment", {
         method: "POST",
@@ -54,6 +61,7 @@ function likeComment(commentID, type) {
     });
 }
 
+// Function to delete a comment
 function deleteComment(commentID) {
     fetch("/comment/delete", {
         method: "POST",
@@ -61,6 +69,7 @@ function deleteComment(commentID) {
         body: `id=${commentID}`
     }).then(() => fetchPosts());
 }
+// Function to cancel comment creation
 function cancelCommentCreation(postID) {
     document.getElementById(`comment-form-${postID}`).style.display = "none";
     document.getElementById(`comment-text-${postID}`).value = "";

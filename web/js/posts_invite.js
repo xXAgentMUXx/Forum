@@ -1,9 +1,12 @@
+// Event listener triggered when the DOM content is fully loaded
 document.addEventListener("DOMContentLoaded", function() {
     fetchPosts();
 });
 
+// Function to fetch and display posts
 function fetchPosts(filter = "all", categoryID = "") {
     let url = "/posts";
+     // Modify the URL based on the filter 
     if (filter === "category" && categoryID) {
         url += `?filter=category&category_id=${categoryID}`;
     } else if (filter === "my_posts") {
@@ -11,7 +14,7 @@ function fetchPosts(filter = "all", categoryID = "") {
     } else if (filter === "liked") {
         url += "?filter=liked";
     }
-
+     // Fetch posts from the server
     fetch(url)
         .then(response => response.json())
         .then(posts => {
@@ -19,12 +22,15 @@ function fetchPosts(filter = "all", categoryID = "") {
             postContainer.innerHTML = "";
             posts.forEach(post => {
                 fetchLikeDislikeCount(post.ID, "post", function(likeCount, dislikeCount) {
+                    // Create a new div element for the post
                     let postElement = document.createElement("div");
                     postElement.classList.add("post");
                     let imageHtml = "";
+                    // If the post has an image, display it
                     if (post.ImagePath && post.ImagePath.trim() !== "") {
                         imageHtml = `<img src="/${post.ImagePath}" alt="Post Image"  class="post-image">`;
                     }
+                     // Set the HTML content of the post element
                     postElement.innerHTML = `
                         <h2>${post.Title}</h2>
                         <p>${post.Content}</p>
@@ -44,6 +50,7 @@ function fetchPosts(filter = "all", categoryID = "") {
         });
 }
 
+// Function to fetch the like and dislike counts
 function fetchLikeDislikeCount(contentID, contentType, callback) {
     fetch(`/likes?id=${contentID}&type=${contentType}`)
         .then(response => response.json())
@@ -56,6 +63,9 @@ function fetchLikeDislikeCount(contentID, contentType, callback) {
             callback(0, 0);
         });
 }
+
+
+// Function to like or dislike a post
 function likePost(postID, type) {
     fetch("/like/post", {
         method: "POST",
@@ -68,6 +78,8 @@ function likePost(postID, type) {
         });
     });
 }
+
+// Function to toggle the visibility of the post creation form
 function showPostForm() {
     let form = document.getElementById("post-form");
     if (form.style.display === "none") {

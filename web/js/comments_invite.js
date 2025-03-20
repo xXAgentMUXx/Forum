@@ -1,8 +1,13 @@
+// Event listener that triggers when the DOM content is fully loaded
 document.addEventListener("DOMContentLoaded", function() {
 });
+
+// Function to display the comment form
 function showCommentForm(postID) {
     document.getElementById(`comment-form-${postID}`).style.display = "block";
 }
+
+// Function to post a comment
 function postComment(postID) {
     let content = document.getElementById(`comment-text-${postID}`).value;
     fetch("/comment/create", {
@@ -11,6 +16,8 @@ function postComment(postID) {
         body: `post_id=${postID}&content=${encodeURIComponent(content)}`
     }).then(() => fetchComments(postID));
 }
+
+// Function to fetch and display comments
 function fetchComments(postID) {
     fetch(`/comments?post_id=${postID}`)
         .then(response => response.json())
@@ -23,6 +30,7 @@ function fetchComments(postID) {
                     likeCount = likeCount || 0;
                     dislikeCount = dislikeCount || 0;
 
+                    // Create a new div element for the comment
                     let commentElement = document.createElement("div");
                     commentElement.classList.add("comment");
                     commentElement.innerHTML = `
@@ -30,6 +38,7 @@ function fetchComments(postID) {
                         👍 <span id="like-count-${commentID}">${likeCount}</span>
                         👎 <span id="dislike-count-${commentID}">${dislikeCount}</span>
                     `;
+                    // Append the new comment to the container
                     commentContainer.appendChild(commentElement);
                 });
             });
