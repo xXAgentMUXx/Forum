@@ -37,7 +37,6 @@ func LikeContent(w http.ResponseWriter, r *http.Request, contentType string) {
 	contentID := r.FormValue("id")
 	typeLike := r.FormValue("type")
 
-
 	// Validate the input
 	if contentID == "" || (typeLike != "like" && typeLike != "dislike") {
 		http.Error(w, "Invalid parameters", http.StatusBadRequest)
