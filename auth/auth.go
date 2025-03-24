@@ -47,6 +47,17 @@ func InitDB() {
         username TEXT,
         password TEXT
     )`)
+	DB.Exec(`CREATE TABLE IF NOT EXISTS notifications (
+	id TEXT PRIMARY KEY,
+	user_id TEXT NOT NULL,
+	post_id TEXT,
+	action TEXT NOT NULL,
+	content TEXT NOT NULL,
+	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	seen BOOLEAN DEFAULT FALSE,
+	FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+
+)`)
 }
 
 // Creat the template with the html file and URL

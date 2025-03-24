@@ -243,5 +243,3 @@ function removeImage() {
     fileInput.value = ""; 
     previewContainer.style.display = "none"; 
 }
-
-

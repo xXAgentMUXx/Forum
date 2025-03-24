@@ -13,35 +13,27 @@ import (
 )
 // Function for the creation of a new comment
 func CreateComment(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
-		return
-	}
-	// Retrieve the user ID from the session to ensure the user is authenticated
 	userID, err := auth.GetUserFromSession(r)
 	if err != nil {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
-	// Retrieve the post ID and content
+
 	postID := r.FormValue("post_id")
 	content := r.FormValue("content")
 
-	// Ensure both the post ID and content are provided
-	if postID == "" || content == "" {
-		http.Error(w, "Post ID and text are required", http.StatusBadRequest)
-		return
-	}
-	// Generate a new comment using UUID
 	commentID := uuid.New().String()
-
-	// Insert the new comment in the database
 	_, err = auth.DB.Exec("INSERT INTO comments (id, user_id, post_id, content, created_at) VALUES (?, ?, ?, ?, ?)", commentID, userID, postID, content, time.Now())
 	if err != nil {
 		http.Error(w, "Error creating comment", http.StatusInternalServerError)
 		return
 	}
-	fmt.Fprintf(w, "Comment created successfully!")
+
+	var postOwner string
+	err = auth.DB.QueryRow("SELECT user_id FROM posts WHERE id = ?", postID).Scan(&postOwner)
+	if err == nil && postOwner != userID {
+		CreateNotification(postOwner, postID, "comment", content)
+	}
 }
 
 // Function to retrieves all comments associated with a specific post

@@ -70,6 +70,10 @@ func main() {
 	mux.Handle("/auth/callback/google", limiter.Limit(http.HandlerFunc((auth.GoogleCallback))))
 	mux.Handle("/auth/callback/github", limiter.Limit(http.HandlerFunc((auth.GithubCallback))))
 	mux.Handle("/forum", limiter.Limit(http.HandlerFunc(auth.AuthMiddleware(forum.ServeForum))))
+	mux.Handle("/notifications", limiter.Limit(http.HandlerFunc(forum.GetNotifications)))
+	mux.Handle("/notifications/mark-seen", limiter.Limit(http.HandlerFunc(forum.MarkNotificationsAsSeen)))
+	mux.Handle("/notifications/delete", limiter.Limit(http.HandlerFunc(forum.DeleteNotification)))
+	mux.Handle("/comments/new", limiter.Limit(http.HandlerFunc(forum.GetNewComments)))
 	mux.Handle("/forum_invite", limiter.Limit(http.HandlerFunc(forum.ServeForumInvite)))
 	mux.Handle("/post/create", limiter.Limit(http.HandlerFunc(forum.CreatePost)))
 	mux.Handle("/posts", limiter.Limit(http.HandlerFunc(forum.GetAllPosts)))
@@ -93,3 +97,6 @@ func main() {
 		log.Fatal("❌ Erreur HTTPS :", err)
 	}
 }
+
+
+// sudo docker system prune -a
