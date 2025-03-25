@@ -31,6 +31,8 @@ func CreateComment(w http.ResponseWriter, r *http.Request) {
 
 	var postOwner string
 	err = auth.DB.QueryRow("SELECT user_id FROM posts WHERE id = ?", postID).Scan(&postOwner)
+
+	// Create a notification for the owner of the post
 	if err == nil && postOwner != userID {
 		CreateNotification(postOwner, postID, "comment", content)
 	}

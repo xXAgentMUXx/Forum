@@ -1,23 +1,27 @@
+// Fetch notifications every 10 seconds
 document.addEventListener("DOMContentLoaded", function () {
     fetchNotifications();
     setInterval(fetchNotifications, 10000);
 });
 
+// Toggles the visibility of the notification box
 function toggleNotificationBox() {
     console.log("toggleNotificationBox() appelé !");
     let notifBox = document.getElementById("notification-box");
 
     console.log("État actuel:", notifBox.classList);
 
+    // If the notification box is hidden, make it visible
     if (notifBox.classList.contains("hidden")) {
         notifBox.classList.remove("hidden");
         notifBox.style.display = "block";
-        markNotificationsAsSeen();
+        markNotificationsAsSeen(); // Mark notifications as seen when the box is shown
         
-        // Appeler fetchNewComments pour chaque post dans les notifications
+        // Fetch new comments for each post linked in the notifications
         const postIDs = Array.from(document.querySelectorAll('.notification-item a')).map(link => link.href.split('/').pop());
         postIDs.forEach(postID => fetchNewComments(postID));
     } else {
+        // Otherwise, hide the notification box
         notifBox.classList.add("hidden");
         notifBox.style.display = "none";
     }
@@ -25,6 +29,7 @@ function toggleNotificationBox() {
     console.log("Nouvel état:", notifBox.classList);
 }
 
+// Fetches the list of notifications
 function fetchNotifications() {
     fetch("/notifications")
         .then(response => response.json())
@@ -34,23 +39,23 @@ function fetchNotifications() {
             let notifIcon = document.getElementById("notification-icon");
             let notifDropdown = document.getElementById("notification-dropdown");
 
-            notifDropdown.innerHTML = '';  // Effacer les notifications existantes avant d'ajouter les nouvelles
+            notifDropdown.innerHTML = '';  
 
             if (notifications.length === 0) {
                 notifDropdown.innerHTML += "<p>Aucune notification</p>";
                 return;
             }
-
+            // Display each notification
             notifications.forEach(notif => {
                 let notifElement = document.createElement("div");
                 notifElement.classList.add("notification-item");
-                notifElement.id = `notif-${notif.id}`; // Ajout de l'ID de la notification pour référence
+                notifElement.id = `notif-${notif.id}`; 
 
                 let deleteButton = document.createElement("button");
                 deleteButton.innerText = "Supprimer";
                 deleteButton.classList.add("delete-notif");
-                deleteButton.onclick = () => deleteNotification(notif.id, notifElement); // Passer l'élément DOM à supprimer
-
+                deleteButton.onclick = () => deleteNotification(notif.id, notifElement); 
+                // Fetch If the notification is for a comment or a like
                 if (notif.action === "comment") {
                     let shortContent = notif.content.length > 50 ? notif.content.substring(0, 50) + "..." : notif.content;
                     notifElement.innerHTML = `
@@ -64,7 +69,7 @@ function fetchNotifications() {
                         <small>${new Date(notif.created_at).toLocaleString()}</small>
                     `;
                 }
-
+                 // Add the delete button to the notification element
                 notifElement.appendChild(deleteButton);
                 notifDropdown.appendChild(notifElement);
             });
@@ -72,12 +77,13 @@ function fetchNotifications() {
         .catch(error => console.error("Erreur lors de la récupération des notifications :", error));
 }
 
+// Marks all notifications as seen
 function markNotificationsAsSeen() {
     fetch("/notifications/mark-seen", { method: "POST" })
         .then(() => fetchNotifications())
         .catch(error => console.error("Erreur lors de la mise à jour des notifications :", error));
 }
-
+// Fetches new comments for a given post
 function fetchNewComments(postID) {
     console.log(`Fetching new comments for post ID: ${postID}`);
     fetch(`/comments/new?post_id=${postID}`)
@@ -101,15 +107,16 @@ function fetchNewComments(postID) {
         .catch(error => console.error("Erreur lors de la récupération des nouveaux commentaires :", error));
 }
 
+// Deletes a specific notification
 function deleteNotification(notifID, notifElement) {
     fetch("/notifications/delete", {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: `id=${notifID}`
     })
+    // Remove the notification element from the DOM after successful deletion
     .then(response => {
         if (response.ok) {
-            // Supprimer l'élément du DOM après une suppression réussie
             notifElement.remove();
         } else {
             console.error("Erreur lors de la suppression de la notification");
