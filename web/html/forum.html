@@ -10,6 +10,7 @@
 </head>
 <body>
     <div id="button-container">
+        <!-- Notification Button -->
         <div id="notification-container">
             <button id="notification-icon" onclick="toggleNotificationBox()">🔔</button>
             <div id="notification-box" class="hidden">
@@ -17,7 +18,14 @@
                 <div id="notification-dropdown"></div>
             </div>
         </div>
+
+        <!-- Activity Button: Positioned next to the notification button -->
+        <a href="/activity" class="activity-btn">Mon Activité</a>
+
+        <!-- Edit Profile Button -->
         <a href="/edit_user" class="edit-profile">Modifier mon compte</a>
+
+        <!-- Logout Button -->
         <a href="/logout" class="logout">Déconnexion</a>
     </div>   
     

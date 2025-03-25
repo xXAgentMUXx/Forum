@@ -73,6 +73,8 @@ func main() {
 	mux.Handle("/notifications", limiter.Limit(http.HandlerFunc(forum.GetNotifications)))
 	mux.Handle("/notifications/mark-seen", limiter.Limit(http.HandlerFunc(forum.MarkNotificationsAsSeen)))
 	mux.Handle("/notifications/delete", limiter.Limit(http.HandlerFunc(forum.DeleteNotification)))
+	mux.Handle("/activity", limiter.Limit(http.HandlerFunc(auth.AuthMiddleware(auth.ServeActivity))))
+	mux.Handle("/user/activity", limiter.Limit(http.HandlerFunc(auth.AuthMiddleware(auth.GetUserActivity))))
 	mux.Handle("/comments/new", limiter.Limit(http.HandlerFunc(forum.GetNewComments)))
 	mux.Handle("/forum_invite", limiter.Limit(http.HandlerFunc(forum.ServeForumInvite)))
 	mux.Handle("/post/create", limiter.Limit(http.HandlerFunc(forum.CreatePost)))

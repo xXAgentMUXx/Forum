@@ -1,11 +1,13 @@
 package auth
 
 import (
+	"Forum/security"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
-	"Forum/security"
+
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -253,5 +255,121 @@ func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
         fmt.Println("❌ AuthMiddleware: Aucun utilisateur authentifié, redirection vers /login")
         http.Redirect(w, r, "/login", http.StatusFound)
     }
+}
+
+// Structure to store user activity
+type Activity struct {
+	Posts      []Post      `json:"posts"`
+	Likes      []LikeInfo  `json:"likes"`
+	Comments   []CommentInfo `json:"comments"`
+}
+
+type Post struct {
+	ID        string   `json:"id"`
+	Title     string `json:"title"`
+	Content   string `json:"content"`
+	CreatedAt string `json:"created_at"`
+}
+
+type LikeInfo struct {
+	PostID    string  `json:"post_id"`
+	Title     string `json:"title"`
+	Type      string `json:"type"` 
+}
+
+type CommentInfo struct {
+	PostID    string   `json:"post_id"`
+	Title     string `json:"title"`
+	Comment   string `json:"comment"`
+	CreatedAt string `json:"created_at"`
+}
+
+// function to display the templates
+func ServeActivity(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "web/html/activity.html")
+}
+
+
+// Function to retrieves the activity of the user
+func GetUserActivity(w http.ResponseWriter, r *http.Request) {
+	 // Retrieve userID
+    userID, err := GetUserFromSession(r)
+    if err != nil {
+        http.Error(w, "Utilisateur non authentifié", http.StatusUnauthorized)
+        return
+    }
+
+    var activity Activity
+
+	// Check if the database is initialized
+	if DB == nil {
+        fmt.Println("❌ Base de données non initialisée") 
+        http.Error(w, "Erreur interne : base de données non initialisée", http.StatusInternalServerError)
+        return
+    }
+    // Fetch posts created by the user
+    rows, err := DB.Query("SELECT id, title, content, created_at FROM posts WHERE user_id = ?", userID)
+    if err != nil {
+		fmt.Println("❌ Erreur SQL :", err)
+		
+        http.Error(w, "Erreur lors de la récupération des posts", http.StatusInternalServerError)
+        return
+    }
+    defer rows.Close()
+
+	// Loop through the fetched posts
+    for rows.Next() {
+        var post Post
+        if err := rows.Scan(&post.ID, &post.Title, &post.Content, &post.CreatedAt); err != nil {
+			http.Error(w, "Erreur lors de la lecture des posts", http.StatusInternalServerError)
+			return
+		}
+        activity.Posts = append(activity.Posts, post)
+    }
+    // Fetch likes/dislikes 
+    rows, err = DB.Query(`
+        SELECT p.id, p.title, l.type
+        FROM likes l
+        JOIN posts p ON l.post_id = p.id
+        WHERE l.user_id = ?`, userID)
+    if err != nil {
+        http.Error(w, "Erreur lors de la récupération des likes", http.StatusInternalServerError)
+        return
+    }
+    defer rows.Close()
+
+	// Loop through the fetched likes
+    for rows.Next() {
+        var like LikeInfo
+        if err := rows.Scan(&like.PostID, &like.Title, &like.Type); err != nil {
+            http.Error(w, "Erreur lors de la lecture des likes", http.StatusInternalServerError)
+            return
+        }
+        activity.Likes = append(activity.Likes, like)
+    }
+   // Fetch comments made by the user
+    rows, err = DB.Query(`
+        SELECT c.post_id, p.title, c.content, c.created_at
+        FROM comments c
+        JOIN posts p ON c.post_id = p.id
+        WHERE c.user_id = ?`, userID)
+    if err != nil {
+        http.Error(w, "Erreur lors de la récupération des commentaires", http.StatusInternalServerError)
+        return
+    }
+    defer rows.Close()
+
+	// Loop through the fetched comments
+    for rows.Next() {
+        var comment CommentInfo
+        if err := rows.Scan(&comment.PostID, &comment.Title, &comment.Comment, &comment.CreatedAt); err != nil {
+            http.Error(w, "Erreur lors de la lecture des commentaires", http.StatusInternalServerError)
+            return
+        }
+        activity.Comments = append(activity.Comments, comment)
+    }
+	 // Set the response header in JSON
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(activity)
 }
 
