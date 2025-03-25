@@ -1,7 +1,24 @@
 // Fetch the user's activity data once the page is ready
 document.addEventListener("DOMContentLoaded", function() {
     fetchActivity();
+    checkSessionAndFetchActivity();
 });
+
+// Function to prevent to go the link without connecting to the forum
+function checkSessionAndFetchActivity() {
+    fetch("/check-session")
+        .then(response => {
+            if (response.status === 401) { 
+                window.location.href = "/login"; 
+            } else {
+                fetchActivity(); 
+            }
+        })
+        .catch(error => {
+            console.error("Erreur lors de la vérification de la session:", error);
+            window.location.href = "/login"; 
+        });
+}
 
 // Asynchronous function to fetch the user's activity
 async function fetchActivity() {

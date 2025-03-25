@@ -298,7 +298,6 @@ func GetUserActivity(w http.ResponseWriter, r *http.Request) {
         http.Error(w, "Utilisateur non authentifié", http.StatusUnauthorized)
         return
     }
-
     var activity Activity
 
 	// Check if the database is initialized
