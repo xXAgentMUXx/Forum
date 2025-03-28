@@ -1,33 +1,38 @@
-body{
+body {
     font-family: Arial, sans-serif;
     background-color: #1e1e2e;
     color: #ffffff;
     text-align: center;
     margin: 0;
     padding: 0;
-}h1{
+}
+
+h1 {
     background-color: #2d2d44;
     padding: 20px;
     margin: 0;
     font-size: 24px;
     text-transform: uppercase;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-}a.logout {
-        position: fixed;
-        top: 10px;
-        right: 10px;
-        background: #ff0000;
-        color: white;
-        padding: 10px 15px;
-        text-decoration: none;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        font-weight: bold;
-        z-index: 1000; /
-}a.logout:hover {
-        background: #8f0101;
-}button {
+}
+
+a.logout {
+    background: #ff0000;
+    color: white;
+    padding: 10px 15px;
+    text-decoration: none;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    z-index: 1000;
+}
+
+a.logout:hover {
+    background: #8f0101;
+}
+
+button {
     background: #ff4500;
     color: white;
     padding: 10px 15px;
@@ -36,9 +41,13 @@ body{
     cursor: pointer;
     margin: 5px;
     font-weight: bold;
-}button:hover {
+}
+
+button:hover {
     background: #cc3700;
-}.post, .comment {
+}
+
+.post, .comment {
     background: #252535;
     padding: 15px;
     margin: 10px auto;
@@ -46,10 +55,14 @@ body{
     border-radius: 5px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
     text-align: left;
-}.post h2 {
+}
+
+.post h2 {
     color: #ffcc00;
     margin: 0 0 10px;
-}textarea, input[type="text"] {
+}
+
+textarea, input[type="text"] {
     width: 100%;
     padding: 10px;
     margin-top: 10px;
@@ -57,7 +70,9 @@ body{
     background: #1e1e2e;
     color: #fff;
     border-radius: 5px;
-}#filter-container {
+}
+
+#filter-container {
     margin: 15px auto;
     padding: 10px;
     background: #2d2d44;
@@ -66,24 +81,34 @@ body{
     align-items: center;
     gap: 10px;
     border-radius: 5px;
-}#filter-container select, #filter-container input {
+}
+
+#filter-container select, #filter-container input {
     padding: 5px;
     border-radius: 5px;
     border: none;
     background: #1e1e2e;
     color: white;
-}.post-buttons {
+}
+
+.post-buttons {
     display: flex;
     gap: 10px;
     margin-top: 10px;
-}#image-preview {
+}
+
+#image-preview {
     position: relative;
     display: inline-block;
-}#preview-img {
+}
+
+#preview-img {
     max-width: 200px;
     height: auto;
     border-radius: 5px;
-}#remove-img {
+}
+
+#remove-img {
     position: absolute;
     top: 5px;
     right: 5px;
@@ -94,21 +119,97 @@ body{
     border-radius: 50%;
     padding: 5px;
     transition: background-color 0.3s;
-}#remove-img:hover {
+}
+
+#remove-img:hover {
     background-color: rgba(0, 0, 0, 0.7);
-}.edit-profile {
+}
+
+/* Adjustments to button-container to align all buttons */
+#button-container {
     position: fixed;
-        top: 10px;
-        right: 149px;
-        background: #007bbf;
-        color: white;
-        padding: 10px 15px;
-        text-decoration: none;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        font-weight: bold;
-        z-index: 1000; 
-}.edit-profile:hover {
+    top: 10px;
+    right: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 1000;
+}
+
+/* Notification button */
+#notification-container {
+    position: relative;
+    display: inline-block;
+}
+
+#notification-container button {
+    background: none;
+    border: none;
+    font-size: 16px;
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+#notification-container button:hover {
+    color: #ff4500;
+}
+
+/* Notification box */
+#notification-box {
+    position: absolute;
+    top: 50px;
+    right: 20px;
+    width: 300px;
+    background: #33334d;
+    border: 1px solid #33334d;
+    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+    padding: 10px;
+    border-radius: 5px;
+    display: block;
+    max-height: 300px; 
+    overflow-y: auto; 
+}
+
+/* Notification item style */
+.notification-item {
+    border-bottom: 1px solid #ddd;
+    padding: 5px;
+    background-color: #2d2d44;
+}
+
+.hidden {
+    display: none;
+}
+
+/* Activity button */
+.activity-btn {
+    background: #ffa500;
+    color: white;
+    padding: 10px 15px;
+    text-decoration: none;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.activity-btn:hover {
+    background: #cc8400;
+}
+
+/* Edit Profile button */
+.edit-profile {
+    background: #007bbf;
+    color: white;
+    padding: 10px 15px;
+    text-decoration: none;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.edit-profile:hover {
     background-color: #0056b3;
 }

@@ -1,7 +1,10 @@
+// Event listener that triggers when the DOM content is fully loaded
 document.addEventListener("DOMContentLoaded", function() {
     fetchPosts();
     checkSessionAndFetchPosts()
 });
+
+// Function to check if the user session is valid
 function checkSessionAndFetchPosts() {
     fetch("/check-session") 
         .then(response => {
@@ -14,6 +17,8 @@ function checkSessionAndFetchPosts() {
             window.location.href = "/login"; 
         });
 }
+
+// Function to fetch posts based on selected filter
 function fetchPosts(filter = "all", categoryID = "") {
     let url = "/posts";
     if (filter === "category" && categoryID) {
@@ -23,8 +28,8 @@ function fetchPosts(filter = "all", categoryID = "") {
     } else if (filter === "liked") {
         url += "?filter=liked";
     }
-    loadCategories();
-    fetch(url)
+    loadCategories();  // Load categories
+    fetch(url) // Fetch posts
     .then(response => response.json())
     .then(posts => {
         let postContainer = document.getElementById("posts");
@@ -35,9 +40,11 @@ function fetchPosts(filter = "all", categoryID = "") {
                 postElement.classList.add("post");
 
                 let imageHtml = "";
+                // If post has an image, display it
                 if (post.ImagePath && post.ImagePath.trim() !== "") {
                     imageHtml = `<img src="/${post.ImagePath}" alt="Post Image" style="max-width: 300px;">`;
                 }
+                  // Create post HTML structure
                 postElement.innerHTML = `
                      <h2>${post.Title}</h2>
                     <p>${post.Content}</p>
@@ -55,13 +62,14 @@ function fetchPosts(filter = "all", categoryID = "") {
                     </div>
                 `;
                 postContainer.appendChild(postElement);
-                fetchComments(post.ID);
+                fetchComments(post.ID); // Fetch and display comments
             });
         });
     })
     .catch(error => console.error("Erreur lors du chargement des posts :", error));
 }
 
+// Function to load categories for the filter and posts
 function loadCategories() {
     fetch("/categories")
         .then(response => response.json())
@@ -69,6 +77,7 @@ function loadCategories() {
             let filterSelect = document.getElementById("post-category-dropdown");
             let postFormSelect = document.getElementById("post-category");
 
+            // Check if category dropdowns are found
             if (!filterSelect || !postFormSelect) {
                 console.error("❌ Erreur : Un des menus de sélection des catégories est introuvable !");
                 return;
@@ -78,18 +87,19 @@ function loadCategories() {
                 optionsHTML += `<option value="${category.id}">${category.name}</option>`;
             });
 
-            filterSelect.innerHTML = optionsHTML;   
-            postFormSelect.innerHTML = optionsHTML; 
+            filterSelect.innerHTML = optionsHTML;   // Populate category dropdown for filter
+            postFormSelect.innerHTML = optionsHTML; // Populate category dropdown for posts
         })
         .catch(error => console.error("❌ Erreur lors du chargement des catégories :", error));
 }
 
+// Function to fetch like and dislike counts
 function fetchLikeDislikeCount(contentID, contentType, callback) {
     if (typeof callback !== "function") {
         console.error("Erreur : callback non défini pour fetchLikeDislikeCount");
         return;
     }
-
+    // Fetch likes and dislikes count
     fetch(`/likes?id=${contentID}&type=${contentType}`)
         .then(response => response.json())
         .then(data => {
@@ -101,6 +111,7 @@ function fetchLikeDislikeCount(contentID, contentType, callback) {
         });
 }
 
+// Function to apply selected filter on posts
 function applyFilter() {
     let filter = document.getElementById("filter").value;
     let categorySelect = document.getElementById("post-category-dropdown");
@@ -111,6 +122,7 @@ function applyFilter() {
     }
     let categoryContainer = categorySelect.parentElement; 
 
+     // Display category filter if "category" filter is selected, and mask others
     if (filter === "category") {
         categoryContainer.style.display = "inline-block"; 
     } else {
@@ -124,6 +136,7 @@ function applyFilter() {
     fetchPosts(filter, categoryID);
 }
 
+// Function to cancel post creation
 function cancelPostCreation() {
     document.getElementById("post-form").style.display = "none";
     document.getElementById("post-title").value = "";
@@ -133,6 +146,7 @@ function cancelPostCreation() {
     document.getElementById("image-preview").style.display = "none";
 }
 
+// Function to delete a post
 function deletePost(postID) {
     fetch("/post/delete", {
         method: "POST",
@@ -141,6 +155,7 @@ function deletePost(postID) {
     }).then(() => fetchPosts());
 }
 
+// Function to create a new post
 async function createPost() {
     const title = document.getElementById("post-title").value;
     const content = document.getElementById("post-content").value;
@@ -149,6 +164,7 @@ async function createPost() {
 
     let selectedCategories = Array.from(categorySelect.selectedOptions).map(option => option.value);
     
+    // Validate form fields
     if (!title || !content || selectedCategories.length === 0) {
         alert("Veuillez remplir tous les champs.");
         return;
@@ -166,6 +182,7 @@ async function createPost() {
             method: "POST",
             body: formData
         });
+        // Reload posts after successful creation
         if (response.ok) {
             fetchPosts(); 
         } else {
@@ -178,6 +195,7 @@ async function createPost() {
     }
 }
 
+// Function to like or dislike a post
 function likePost(postID, type) {
     fetch("/like/post", {
         method: "POST",
@@ -190,6 +208,8 @@ function likePost(postID, type) {
         });
     });
 }
+
+// Function to toggle the display of the post creation form
 function showPostForm() {
     let form = document.getElementById("post-form");
     if (form.style.display === "none") {
@@ -215,11 +235,11 @@ function previewImage(event) {
     }
 }
 
+// Function to preview the selected image for post
 function removeImage() {
     const fileInput = document.getElementById("post-image");
     const previewContainer = document.getElementById("image-preview");
+    // Clear image input
     fileInput.value = ""; 
     previewContainer.style.display = "none"; 
 }
-
-

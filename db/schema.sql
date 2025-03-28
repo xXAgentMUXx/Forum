@@ -70,3 +70,14 @@ CREATE TABLE post_images (
     image_path TEXT NOT NULL,
     FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS notifications (
+    id          TEXT PRIMARY KEY,
+    user_id     TEXT NOT NULL,
+    post_id     TEXT,
+    action      TEXT NOT NULL,
+    content     TEXT NOT NULL,
+    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    seen        BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
