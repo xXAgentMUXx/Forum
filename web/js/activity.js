@@ -1,6 +1,5 @@
 // Fetch the user's activity data once the page is ready
 document.addEventListener("DOMContentLoaded", function() {
-    fetchActivity();
     checkSessionAndFetchActivity();
 });
 

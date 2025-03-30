@@ -1,10 +1,11 @@
 PRAGMA foreign_keys = ON;
 
 CREATE TABLE users (
-    id          TEXT PRIMARY KEY, 
+    id          TEXT PRIMARY KEY,
     email       TEXT UNIQUE NOT NULL,
     username    TEXT UNIQUE NOT NULL,
     password    TEXT NULL,
+    role        TEXT CHECK(role IN ('guest', 'user', 'moderator', 'admin')) DEFAULT 'user',
     created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -79,5 +80,24 @@ CREATE TABLE IF NOT EXISTS notifications (
     content     TEXT NOT NULL,
     created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     seen        BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS reports (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    post_id TEXT NOT NULL,
+    reason TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending',
+    FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
+);
+
+
+CREATE TABLE pending_posts (
+    id          TEXT PRIMARY KEY,
+    user_id     TEXT NOT NULL,
+    title       TEXT NOT NULL,
+    content     TEXT NOT NULL,
+    status      TEXT CHECK(status IN ('pending', 'approved', 'rejected')) DEFAULT 'pending',
+    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );

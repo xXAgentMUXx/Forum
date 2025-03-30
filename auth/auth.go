@@ -58,8 +58,16 @@ func InitDB() {
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	seen BOOLEAN DEFAULT FALSE,
 	FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-
 )`)
+DB.Exec(`
+    CREATE TABLE IF NOT EXISTS reports (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    post_id TEXT NOT NULL,
+    reason TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending',
+    FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
+);
+`)
 }
 
 // Creat the template with the html file and URL
