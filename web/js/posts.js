@@ -35,6 +35,7 @@ function fetchPosts(filter = "all", categoryID = "") {
         let postContainer = document.getElementById("posts");
         postContainer.innerHTML = "";
         posts.forEach(post => {
+            if (!post.category_id) return;
             fetchLikeDislikeCount(post.ID, "post", function(likeCount, dislikeCount) {
                 let postElement = document.createElement("div");
                 postElement.classList.add("post");

@@ -254,3 +254,107 @@ async function rejectReport(reportID) {
 // Récupérer et afficher les rapports dès que le DOM est chargé
 fetchReports();
 });
+
+document.addEventListener("DOMContentLoaded", function () {
+    const categoryList = document.getElementById("category-list");
+    const createCategoryBtn = document.getElementById("create-category-btn");
+    const categoryNameInput = document.getElementById("category-name");
+
+    // Fonction pour récupérer les catégories depuis le serveur
+    async function fetchCategories() {
+        try {
+            const response = await fetch("/categories");
+            if (!response.ok) throw new Error("Erreur lors de la récupération des catégories");
+
+            const categories = await response.json();
+            if (!Array.isArray(categories)) throw new Error("Données invalides reçues du serveur.");
+
+            displayCategories(categories);
+        } catch (error) {
+            console.error("Erreur:", error);
+            categoryList.innerHTML = "<p>Impossible de charger les catégories.</p>";
+        }
+    }
+
+    // Fonction pour afficher les catégories
+    function displayCategories(categories) {
+        categoryList.innerHTML = ""; // Nettoyage avant affichage
+
+        categories.forEach(category => {
+            const categoryElement = document.createElement("div");
+            categoryElement.className = "category";
+            categoryElement.innerHTML = `
+                <p>${category.name}</p>
+                <button class="delete-category-btn" data-id="${category.id}">🗑️ Supprimer</button>
+            `;
+
+            categoryList.appendChild(categoryElement);
+
+            // Ajouter un gestionnaire d'événement pour supprimer une catégorie
+            const deleteCategoryButtons = categoryElement.querySelectorAll(".delete-category-btn");
+            deleteCategoryButtons.forEach(button => {
+                button.addEventListener("click", function() {
+                    const categoryID = this.getAttribute("data-id");
+                    deleteCategory(categoryID);
+                });
+            });
+        });
+    }
+
+    // Fonction pour créer une catégorie
+    async function createCategory() {
+        const categoryName = categoryNameInput.value.trim();
+
+        if (!categoryName) {
+            alert("Le nom de la catégorie ne peut pas être vide");
+            return;
+        }
+
+        try {
+            const response = await fetch("/categories/create", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: `name=${categoryName}`
+            });
+
+            if (response.ok) {
+                alert("Catégorie créée !");
+                fetchCategories();  // Recharger les catégories après création
+            } else {
+                alert("Erreur lors de la création de la catégorie !");
+            }
+        } catch (error) {
+            console.error("Erreur lors de la création de la catégorie:", error);
+            alert("Une erreur s'est produite.");
+        }
+    }
+
+    // Fonction pour supprimer une catégorie
+    async function deleteCategory(categoryID) {
+        if (!confirm("Voulez-vous vraiment supprimer cette catégorie ?")) return;
+
+        try {
+            const response = await fetch("/categories/delete", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: `id=${categoryID}`
+            });
+
+            if (response.ok) {
+                alert("Catégorie supprimée !");
+                fetchCategories();  // Recharger les catégories après suppression
+            } else {
+                alert("Erreur lors de la suppression de la catégorie !");
+            }
+        } catch (error) {
+            console.error("Erreur lors de la suppression de la catégorie:", error);
+            alert("Une erreur s'est produite.");
+        }
+    }
+
+    // Ajouter un gestionnaire d'événement pour créer une catégorie
+    createCategoryBtn.addEventListener("click", createCategory);
+
+    // Récupérer et afficher les catégories dès que le DOM est chargé
+    fetchCategories();
+});

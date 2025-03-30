@@ -204,3 +204,63 @@ func GetReports(w http.ResponseWriter, r *http.Request) {
     w.Header().Set("Content-Type", "application/json")
     json.NewEncoder(w).Encode(reports)
 }
+
+func CreateCategory(w http.ResponseWriter, r *http.Request) {
+    if r.Method != http.MethodPost {
+        http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+        return
+    }
+
+    // Récupérer le nom de la catégorie depuis la requête
+    categoryName := r.FormValue("name")
+    if categoryName == "" {
+        http.Error(w, "Category name is required", http.StatusBadRequest)
+        return
+    }
+
+    // Vérification si la catégorie existe déjà
+    var existingCategory string
+    err := auth.DB.QueryRow("SELECT name FROM categories WHERE name = ?", categoryName).Scan(&existingCategory)
+    if err == nil {
+        http.Error(w, "Category already exists", http.StatusBadRequest)
+        return
+    }
+
+    // Insérer la nouvelle catégorie dans la base de données
+    _, err = auth.DB.Exec("INSERT INTO categories (name) VALUES (?)", categoryName)
+    if err != nil {
+        http.Error(w, "Error creating category", http.StatusInternalServerError)
+        return
+    }
+
+    // Répondre avec un message de succès
+    w.Header().Set("Content-Type", "application/json")
+    log.Println("Nom de la catégorie reçu :", categoryName)
+
+    json.NewEncoder(w).Encode(map[string]string{"message": "Category created successfully"})
+}
+
+func DeleteCategory(w http.ResponseWriter, r *http.Request) {
+    if r.Method != http.MethodPost {
+        http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+        return
+    }
+
+    // Récupérer l'ID de la catégorie à supprimer
+    categoryID := r.FormValue("id")
+    if categoryID == "" {
+        http.Error(w, "Category ID is required", http.StatusBadRequest)
+        return
+    }
+
+    // Supprimer la catégorie de la base de données
+    _, err := auth.DB.Exec("DELETE FROM categories WHERE id = ?", categoryID)
+    if err != nil {
+        http.Error(w, "Error deleting category", http.StatusInternalServerError)
+        return
+    }
+
+    // Répondre avec un message de succès
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(map[string]string{"message": "Category deleted successfully"})
+}

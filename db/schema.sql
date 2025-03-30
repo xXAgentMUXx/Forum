@@ -29,8 +29,8 @@ CREATE TABLE comments (
 );
 
 CREATE TABLE categories (
-    id   TEXT PRIMARY KEY, 
-    name TEXT UNIQUE NOT NULL
+    id INTEGER PRIMARY KEY AUTOINCREMENT,  
+    name TEXT UNIQUE NOT NULL              
 );
 
 CREATE TABLE post_categories (

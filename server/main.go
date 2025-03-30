@@ -88,6 +88,8 @@ func main() {
 	mux.Handle("/post/create", limiter.Limit(http.HandlerFunc(forum.CreatePost)))
 	mux.Handle("/posts", limiter.Limit(http.HandlerFunc(forum.GetAllPosts)))
 	mux.Handle("/categories", limiter.Limit(http.HandlerFunc(forum.GetCategories)))
+	mux.Handle("/categories/create", limiter.Limit(http.HandlerFunc(forum.CreateCategory)))
+	mux.Handle("/categories/delete", limiter.Limit(http.HandlerFunc(forum.DeleteCategory)))
 	mux.Handle("/comments", limiter.Limit(http.HandlerFunc(forum.GetComments)))
 	mux.Handle("/like/comment", limiter.Limit(http.HandlerFunc(forum.LikeComment)))
 	mux.Handle("/comment/create", limiter.Limit(http.HandlerFunc(forum.CreateComment)))
