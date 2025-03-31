@@ -19,14 +19,17 @@
             </div>
         </div>
 
-        <!-- Activity Button: Positioned next to the notification button -->
         <a href="/activity" class="activity-btn">Mon Activité</a>
 
-        <!-- Edit Profile Button -->
         <a href="/edit_user" class="edit-profile">Modifier mon compte</a>
 
-        <!-- Logout Button -->
         <a href="/logout" class="logout">Déconnexion</a>
+
+        {{ if eq .Role "moderator" }}
+        <a href="/moderator">
+        <button id="moderator-button">Actions de Modérateur</button>
+        </a>
+        {{ end }}
     </div>   
     
     <h1>Forum</h1>

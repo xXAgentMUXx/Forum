@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
+	"text/template"
 	"time"
 
 	"Forum/auth"
@@ -13,7 +14,39 @@ import (
 
 // Function to display the templates for connected user
 func ServeForum(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "web/html/forum.html")
+
+    userID, err := auth.GetUserFromSession(r)
+    if err != nil {
+        http.Error(w, "Unauthorized", http.StatusUnauthorized)
+        return
+    }
+    // Récupérer le rôle de l'utilisateur
+    var role string
+    err = auth.DB.QueryRow("SELECT role FROM users WHERE id = ?", userID).Scan(&role)
+    if err != nil {
+        http.Error(w, "Error retrieving user role", http.StatusInternalServerError)
+        return
+    }
+
+    // Passer le rôle à votre template
+    data := struct {
+        UserID string
+        Role   string
+    }{
+        UserID: userID,
+        Role:   role,
+    }
+    // Utilisez le moteur de template pour rendre le template
+    tmpl, err := template.ParseFiles("web/html/forum.html")
+    if err != nil {
+        http.Error(w, "Error loading template", http.StatusInternalServerError)
+        return
+    }
+    // Exécutez le template avec les données
+    err = tmpl.Execute(w, data)
+    if err != nil {
+        http.Error(w, "Error rendering template", http.StatusInternalServerError)
+    }
 }
 
 // Function to display the templates for non-connected user
