@@ -69,7 +69,7 @@ func main() {
 	mux.Handle("/auth/github", limiter.Limit(http.HandlerFunc((auth.AuthGithub))))
 	mux.Handle("/auth/callback/google", limiter.Limit(http.HandlerFunc((auth.GoogleCallback))))
 	mux.Handle("/auth/callback/github", limiter.Limit(http.HandlerFunc((auth.GithubCallback))))
-	mux.Handle("/admin", limiter.Limit(http.HandlerFunc(forum.ServeAdmin)))
+	mux.Handle("/admin", limiter.Limit(http.HandlerFunc(auth.AuthMiddleware(forum.ServeAdmin))))
 	mux.Handle("/request-moderator", limiter.Limit(http.HandlerFunc(forum.RequestModerator)))
 	mux.Handle("/moderator-requests", limiter.Limit(http.HandlerFunc(forum.GetModeratorRequests)))
 	mux.Handle("/approve-moderator", limiter.Limit(http.HandlerFunc(forum.ApproveModerator)))

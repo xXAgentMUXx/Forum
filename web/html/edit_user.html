@@ -21,7 +21,7 @@
         <button type="submit">Enregistrer</button>
     </form>
 
-    {{ if and (ne .User.Role "moderator") (ne .User.Role "admin") }}
+    {{ if and (ne .Role "moderator") (ne .Role "admin") }}
     <button onclick="requestModerator('{{ .UserID }}')">Demander à être modérateur</button>
     {{ end }}
 
