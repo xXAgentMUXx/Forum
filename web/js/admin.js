@@ -1,5 +1,39 @@
 document.addEventListener("DOMContentLoaded", function () {
+    checkSessionAndRedirectToAdmin();
     const postsContainer = document.getElementById("posts");
+
+    // Fonction pour vérifier la session et rediriger si nécessaire
+    function checkSessionAndRedirectToAdmin() {
+        fetch("/check-session")
+            .then(response => {
+                if (response.status === 401) {
+                    window.location.href = "/login"; // Rediriger vers la page de connexion si la session est invalide
+                } else {
+                    // Session valide, on peut récupérer les informations de l'utilisateur
+                    response.json().then(data => {
+                        // Vérifier si l'email est celui de l'admin
+                        if (data.email === "test@outlook.fr") {
+                            // Afficher le bouton admin
+                            document.getElementById("admin-button").style.display = "block";
+                        } else {
+                            // Cacher le bouton admin
+                            document.getElementById("admin-button").style.display = "none";
+                        }
+
+                        // Charger les posts et autres données
+                        fetchPosts();
+                        fetchReports();
+                        fetchCategories();
+                        fetchModRequests();
+                        loadModerators();
+                    });
+                }
+            })
+            .catch(error => {
+                console.error("Erreur lors de la vérification de la session:", error);
+                window.location.href = "/login"; // Rediriger vers la page de connexion en cas d'erreur
+            });
+    }
 
     // Fonction pour récupérer les posts
     async function fetchPosts() {
@@ -303,31 +337,32 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Fonction pour créer une catégorie
     async function createCategory() {
-        const categoryName = categoryNameInput.value.trim();
+    const categoryName = categoryNameInput.value.trim();
 
-        if (!categoryName) {
-            alert("Le nom de la catégorie ne peut pas être vide");
-            return;
-        }
-
-        try {
-            const response = await fetch("/categories/create", {
-                method: "POST",
-                headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                body: `name=${categoryName}`
-            });
-
-            if (response.ok) {
-                alert("Catégorie créée !");
-                fetchCategories();  // Recharger les catégories après création
-            } else {
-                alert("Erreur lors de la création de la catégorie !");
-            }
-        } catch (error) {
-            console.error("Erreur lors de la création de la catégorie:", error);
-            alert("Une erreur s'est produite.");
-        }
+    if (!categoryName) {
+        alert("Le nom de la catégorie ne peut pas être vide");
+        return;
     }
+
+    try {
+        const response = await fetch("/categories/create", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: `name=${categoryName}`
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            alert(`Catégorie créée avec succès ! ID de la catégorie : ${data.id}`);
+            fetchCategories();  // Recharger les catégories après création
+        } else {
+            alert("Erreur lors de la création de la catégorie !");
+        }
+    } catch (error) {
+        console.error("Erreur lors de la création de la catégorie:", error);
+        alert("Une erreur s'est produite.");
+    }
+}
 
     // Fonction pour supprimer une catégorie
     async function deleteCategory(categoryID) {
@@ -487,3 +522,50 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 });
+
+async function loadModerators() {
+    const response = await fetch("/get-moderators");
+    if (response.ok) {
+        const moderators = await response.json();
+        const moderatorList = document.getElementById("moderator-list");
+
+        moderatorList.innerHTML = ""; // Clear existing list
+
+        moderators.forEach(moderator => {
+            const moderatorItem = document.createElement("div");
+            moderatorItem.classList.add("moderator-item");
+            moderatorItem.innerHTML = `
+                <span>${moderator.username}</span>
+                <button onclick="removeModeratorRole('${moderator.id}')">Retirer modérateur</button>
+            `;
+            moderatorList.appendChild(moderatorItem);
+        });
+    } else {
+        alert("Erreur lors du chargement des modérateurs");
+    }
+}
+
+async function removeModeratorRole(userID) {
+    if (!confirm("Voulez-vous vraiment retirer le rôle de modérateur ?")) return;
+
+    try {
+        const response = await fetch("/remove-moderator-role", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: `user_id=${userID}`
+        });
+
+        if (response.ok) {
+            alert("Rôle de modérateur retiré !");
+            loadModerators();  // Reload the moderators list
+        } else {
+            alert("Erreur lors du retrait du rôle de modérateur !");
+        }
+    } catch (error) {
+        console.error("Erreur lors du retrait du rôle de modérateur:", error);
+        alert("Une erreur s'est produite.");
+    }
+}
+
+// Load the list of moderators when the page is ready
+document.addEventListener("DOMContentLoaded", loadModerators);

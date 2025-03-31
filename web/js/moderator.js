@@ -1,5 +1,23 @@
 document.addEventListener("DOMContentLoaded", function () {
+    checkSessionAndRedirectToAdmin();
     const postsContainer = document.getElementById("posts");
+
+    function checkSessionAndRedirectToAdmin() {
+        fetch("/check-session")
+            .then(response => {
+                if (response.status === 401) {
+                    window.location.href = "/login"; // Rediriger vers la page de connexion si la session est invalide
+                } else {
+                    // Session valide, on peut récupérer les posts et autres données
+                    fetchPosts(); // Charger les posts
+                    fetchComments();
+                }
+            })
+            .catch(error => {
+                console.error("Erreur lors de la vérification de la session:", error);
+                window.location.href = "/login"; // Rediriger vers la page de connexion en cas d'erreur
+            });
+    }
 
     // Fonction pour récupérer les posts
     async function fetchPosts() {

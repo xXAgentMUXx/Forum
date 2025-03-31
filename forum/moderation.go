@@ -226,18 +226,34 @@ func CreateCategory(w http.ResponseWriter, r *http.Request) {
         return
     }
 
+    // Si une erreur de scan se produit (catégorie non trouvée), on continue
+    if err != sql.ErrNoRows {
+        http.Error(w, "Error checking category existence", http.StatusInternalServerError)
+        return
+    }
+
     // Insérer la nouvelle catégorie dans la base de données
-    _, err = auth.DB.Exec("INSERT INTO categories (name) VALUES (?)", categoryName)
+    result, err := auth.DB.Exec("INSERT INTO categories (name) VALUES (?)", categoryName)
     if err != nil {
         http.Error(w, "Error creating category", http.StatusInternalServerError)
         return
     }
 
-    // Répondre avec un message de succès
+    // Récupérer l'ID de la catégorie insérée
+    lastInsertID, err := result.LastInsertId()
+    if err != nil {
+        http.Error(w, "Error retrieving category ID", http.StatusInternalServerError)
+        return
+    }
+
+    // Répondre avec un message de succès et l'ID de la nouvelle catégorie
     w.Header().Set("Content-Type", "application/json")
     log.Println("Nom de la catégorie reçu :", categoryName)
 
-    json.NewEncoder(w).Encode(map[string]string{"message": "Category created successfully"})
+    json.NewEncoder(w).Encode(map[string]interface{}{
+        "message": "Category created successfully",
+        "id":      lastInsertID,
+    })
 }
 
 func DeleteCategory(w http.ResponseWriter, r *http.Request) {
@@ -422,4 +438,58 @@ func UpdateUserRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	fmt.Fprintf(w, "User role updated to %s", newRole)
+}
+
+// RemoveModeratorRole - Admin removes moderator role from a user
+func RemoveModeratorRole(w http.ResponseWriter, r *http.Request) {
+    if r.Method != http.MethodPost {
+        http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+        return
+    }
+
+    userID := r.FormValue("user_id")
+    if userID == "" {
+        http.Error(w, "User  ID is required", http.StatusBadRequest)
+        return
+    }
+
+    // Mettre à jour le rôle de l'utilisateur
+    _, err := auth.DB.Exec("UPDATE users SET role = 'user' WHERE id = ?", userID)
+    if err != nil {
+        http.Error(w, "Error removing moderator role", http.StatusInternalServerError)
+        return
+    }
+
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(map[string]string{"message": "Moderator role removed successfully"})
+}
+
+func GetModerators(w http.ResponseWriter, r *http.Request) {
+    rows, err := auth.DB.Query("SELECT id, username FROM users WHERE role = 'moderator'")
+    if err != nil {
+        http.Error(w, "Erreur lors de la récupération des modérateurs", http.StatusInternalServerError)
+        log.Println("Erreur lors de la récupération des modérateurs:", err)
+        return
+    }
+    defer rows.Close()
+
+    var moderators []map[string]interface{}
+    for rows.Next() {
+        var id, username string
+        if err := rows.Scan(&id, &username); err != nil {
+            http.Error(w, "Erreur lors de la lecture des données", http.StatusInternalServerError)
+            log.Println("Erreur lors de la lecture des lignes de la base de données:", err)
+            return
+        }
+
+        moderators = append(moderators, map[string]interface{}{"id": id, "username": username})
+    }
+
+    if len(moderators) == 0 {
+        fmt.Fprintln(w, "Aucun modérateur trouvé")
+        return
+    }
+
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(moderators)
 }
