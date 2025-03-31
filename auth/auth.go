@@ -58,8 +58,38 @@ func InitDB() {
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	seen BOOLEAN DEFAULT FALSE,
 	FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-
 )`)
+DB.Exec(`
+    CREATE TABLE IF NOT EXISTS reports (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    post_id TEXT NOT NULL,
+    reason TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending',
+    FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
+);
+`)
+DB.Exec(`
+    CREATE TABLE IF NOT EXISTS promotion_requests (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id     TEXT NOT NULL,
+    status      TEXT CHECK(status IN ('pending', 'approved', 'rejected')) DEFAULT 'pending',
+    requested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    approved_by TEXT NULL,
+    approved_at TIMESTAMP NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (approved_by) REFERENCES users(id)
+);
+`)
+DB.Exec(`
+    CREATE TABLE users (
+    id          TEXT PRIMARY KEY,
+    email       TEXT UNIQUE NOT NULL,
+    username    TEXT UNIQUE NOT NULL,
+    password    TEXT NULL,
+    role        TEXT CHECK(role IN ('guest', 'user', 'moderator', 'admin')) DEFAULT 'user',
+    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+`)
 }
 
 // Creat the template with the html file and URL
@@ -371,4 +401,3 @@ func GetUserActivity(w http.ResponseWriter, r *http.Request) {
     w.Header().Set("Content-Type", "application/json")
     json.NewEncoder(w).Encode(activity)
 }
-

@@ -1,7 +1,7 @@
 // Event listener that triggers when the DOM content is fully loaded
 document.addEventListener("DOMContentLoaded", function() {
     fetchPosts();
-    checkSessionAndFetchPosts()
+    checkSessionAndFetchPosts();
 });
 
 // Function to check if the user session is valid
@@ -44,7 +44,7 @@ function fetchPosts(filter = "all", categoryID = "") {
                 if (post.ImagePath && post.ImagePath.trim() !== "") {
                     imageHtml = `<img src="/${post.ImagePath}" alt="Post Image" style="max-width: 300px;">`;
                 }
-                  // Create post HTML structure
+                // Create post HTML structure
                 postElement.innerHTML = `
                      <h2>${post.Title}</h2>
                     <p>${post.Content}</p>
@@ -67,6 +67,20 @@ function fetchPosts(filter = "all", categoryID = "") {
         });
     })
     .catch(error => console.error("Erreur lors du chargement des posts :", error));
+}
+
+// Function to request moderator status for a user
+function requestModerator(userID) {
+    fetch("/request-moderator", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ user_id: userID })
+    })
+    .then(response => response.json())
+    .then(data => console.log("Réponse du serveur:", data))
+    .catch(error => console.error("Erreur:", error));
 }
 
 // Function to load categories for the filter and posts
@@ -218,6 +232,7 @@ function showPostForm() {
         form.style.display = "none";
     }
 }
+
 function previewImage(event) {
     const file = event.target.files[0];
     const preview = document.getElementById("preview-img");
