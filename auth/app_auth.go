@@ -2,12 +2,13 @@ package auth
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"os"
 	"time"
 
+	"github.com/google/uuid"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/github"
 	"golang.org/x/oauth2/google"
@@ -50,19 +51,16 @@ func AuthGithub(w http.ResponseWriter, r *http.Request) {
 
 // GoogleCallback handles the callback
 func GoogleCallback(w http.ResponseWriter, r *http.Request) {
-	// Retrieve the authorization code 
 	code := r.URL.Query().Get("code")
 	if code == "" {
 		http.Error(w, "Code not found", http.StatusBadRequest)
 		return
 	}
-	// Exchange the authorization code for an access token
 	token, err := GoogleOauthConfig.Exchange(context.Background(), code)
 	if err != nil {
 		http.Error(w, "Failed to exchange token", http.StatusInternalServerError)
 		return
 	}
-	// Use the access token to fetch user information 
 	client := GoogleOauthConfig.Client(context.Background(), token)
 	resp, err := client.Get("https://www.googleapis.com/oauth2/v2/userinfo")
 	if err != nil {
@@ -71,35 +69,47 @@ func GoogleCallback(w http.ResponseWriter, r *http.Request) {
 	}
 	defer resp.Body.Close()
 
-	// Parse the response and retrieve the user's email
 	var userInfo map[string]interface{}
 	json.NewDecoder(resp.Body).Decode(&userInfo)
-
 	email, ok := userInfo["email"].(string)
 	if !ok || email == "" {
 		http.Error(w, "No email found in Google response", http.StatusUnauthorized)
 		return
 	}
-	// Set a session cookie with the user's email and redirect to the forum
-	setSessionCookie(w, email)
+
+	// Vérifier si l'utilisateur existe déjà dans la base de données
+	var userID string
+	err = DB.QueryRow("SELECT id FROM users WHERE email = ?", email).Scan(&userID)
+	if err == sql.ErrNoRows {
+		// Si l'utilisateur n'existe pas, le créer
+		userID = uuid.New().String()
+		_, err = DB.Exec("INSERT INTO users (id, email, username) VALUES (?, ?, ?)", userID, email, email)
+		if err != nil {
+			http.Error(w, "Failed to create user", http.StatusInternalServerError)
+			return
+		}
+	} else if err != nil {
+		http.Error(w, "Database error", http.StatusInternalServerError)
+		return
+	}
+
+	// Créer une session avec l'userID
+	createUserSession(w, userID)
 	http.Redirect(w, r, "/forum", http.StatusSeeOther)
 }
 
-// GithubCallback handles the callback 
+// GithubCallback handles the callback
 func GithubCallback(w http.ResponseWriter, r *http.Request) {
-	// Retrieve the authorization code
 	code := r.URL.Query().Get("code")
 	if code == "" {
 		http.Error(w, "Code not found", http.StatusBadRequest)
 		return
 	}
-	// Exchange the authorization code for an access token
 	token, err := GithubOauthConfig.Exchange(context.Background(), code)
 	if err != nil {
 		http.Error(w, "Failed to exchange token", http.StatusInternalServerError)
 		return
 	}
-	// Use the access token to fetch user
 	client := GithubOauthConfig.Client(context.Background(), token)
 	resp, err := client.Get("https://api.github.com/user")
 	if err != nil {
@@ -108,15 +118,12 @@ func GithubCallback(w http.ResponseWriter, r *http.Request) {
 	}
 	defer resp.Body.Close()
 
-
-	// Parse the response and retrieve the user's email
 	var userInfo map[string]interface{}
 	json.NewDecoder(resp.Body).Decode(&userInfo)
-
 	email, ok := userInfo["email"].(string)
+
+	// Si l'email n'est pas présent, récupérer la liste des emails
 	if !ok || email == "" {
-		fmt.Println("❌ [DEBUG] Email manquant dans la réponse GitHub. Tentative de récupération des emails...")
-		
 		resp, err := client.Get("https://api.github.com/user/emails")
 		if err != nil {
 			http.Error(w, "Failed to get user emails", http.StatusInternalServerError)
@@ -124,11 +131,10 @@ func GithubCallback(w http.ResponseWriter, r *http.Request) {
 		}
 		defer resp.Body.Close()
 
-		// Parse the list of emails and find the primary email
 		var emails []map[string]interface{}
 		json.NewDecoder(resp.Body).Decode(&emails)
 
-		// Look for the primary email and use it
+		// Chercher l'email principal
 		for _, e := range emails {
 			if primary, ok := e["primary"].(bool); ok && primary {
 				email, _ = e["email"].(string)
@@ -136,26 +142,50 @@ func GithubCallback(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
+
 	if email == "" {
 		http.Error(w, "No email found in GitHub response", http.StatusUnauthorized)
 		return
 	}
-	// Set a session cookie with the user's email and redirect to the forum
-	setSessionCookie(w, email)
+
+	// Vérifier si l'utilisateur existe déjà
+	var userID string
+	err = DB.QueryRow("SELECT id FROM users WHERE email = ?", email).Scan(&userID)
+	if err == sql.ErrNoRows {
+		// Si l'utilisateur n'existe pas, le créer
+		userID = uuid.New().String()
+		_, err = DB.Exec("INSERT INTO users (id, email, username) VALUES (?, ?, ?)", userID, email, email)
+		if err != nil {
+			http.Error(w, "Failed to create user", http.StatusInternalServerError)
+			return
+		}
+	} else if err != nil {
+		http.Error(w, "Database error", http.StatusInternalServerError)
+		return
+	}
+
+	// Créer une session avec l'userID
+	createUserSession(w, userID)
 	http.Redirect(w, r, "/forum", http.StatusSeeOther)
 }
-// sets a session cookie
-func setSessionCookie(w http.ResponseWriter, email string) {
-	// Set cookie expiration time
+
+// Crée une session basée sur l'userID
+func createUserSession(w http.ResponseWriter, userID string) {
+	sessionID := uuid.New().String()
 	expiration := time.Now().Add(24 * time.Hour)
-	cookie := http.Cookie{
-		Name:     "session",
-		Value:    email,
+
+	_, err := DB.Exec("INSERT INTO sessions (id, user_id, expires_at) VALUES (?, ?, ?)", sessionID, userID, expiration)
+	if err != nil {
+		http.Error(w, "Error creating session", http.StatusInternalServerError)
+		return
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "session_token",
+		Value:    sessionID,
 		Expires:  expiration,
 		HttpOnly: true,
-		Secure:   true, 
+		Secure:   true,
 		Path:     "/",
-	}
-	// Set the cookie in the HTTP response
-	http.SetCookie(w, &cookie)
+	})
 }

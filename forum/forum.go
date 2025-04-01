@@ -3,6 +3,7 @@ package forum
 import (
 	"database/sql"
 	"encoding/json"
+	"log"
 	"net/http"
 	"text/template"
 	"time"
@@ -24,6 +25,7 @@ func ServeForum(w http.ResponseWriter, r *http.Request) {
     var role, email string
     err = auth.DB.QueryRow("SELECT role, email FROM users WHERE id = ?", userID).Scan(&role, &email)
     if err != nil {
+		log.Printf("Error retrieving user data: %v", err)
         http.Error(w, "Error retrieving user data", http.StatusInternalServerError)
         return
     }
