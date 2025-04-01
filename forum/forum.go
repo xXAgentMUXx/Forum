@@ -118,7 +118,7 @@ func LikeContent(w http.ResponseWriter, r *http.Request, contentType string) {
 		err = auth.DB.QueryRow("SELECT user_id FROM comments WHERE id = ?", contentID).Scan(&ownerID)
 	}
 	if err == nil && ownerID != userID {
-		CreateNotification(ownerID, contentID, "like", "Your post/comment received a "+typeLike)
+		CreateNotification(ownerID, contentID, "like", ""+typeLike)
 	}
 	if err != nil {
 		http.Error(w, "Error updating like status", http.StatusInternalServerError)
@@ -126,7 +126,7 @@ func LikeContent(w http.ResponseWriter, r *http.Request, contentType string) {
 	}
 	// Create a notification for the owner of the post or comments
 	if err == nil && ownerID != userID {
-		CreateNotification(ownerID, contentID, "like", "Your post/comment received a "+typeLike)
+		CreateNotification(ownerID, contentID, "like", ""+typeLike)
 	}
 	// Send a JSON response
 	w.Header().Set("Content-Type", "application/json")

@@ -31,7 +31,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 window.location.href = "/login"; // Rediriger en cas d'erreur
             });
     }
-    
+
     // Fonction pour récupérer les posts
     async function fetchPosts() {
         try {
@@ -59,21 +59,22 @@ document.addEventListener("DOMContentLoaded", function () {
             const date = post.CreatedAt ? new Date(post.CreatedAt).toLocaleDateString() : "Date inconnue";
 
             const imageHtml = post.ImagePath && post.ImagePath.trim() !== "" 
-                ? `<img src="/${post.ImagePath}" alt="Image du post" style="max-width: 300px;">`
-                : "";
+            ? `<img src="/${post.ImagePath}" alt="Image du post" style="max-width: 300px; display: block; margin: 0 auto; margin-bottom: 10px;">`
+            : "";
 
             const postElement = document.createElement("div");
             postElement.className = "post";
             postElement.innerHTML = `
+                <h2>Post :</h2>
                 <h3>${title}</h3>
                 <p>${content}</p>
-                <small>Posté par ${author} le ${date}</small>
                 ${imageHtml}
+                <small>Posté par ${author} le ${date}</small>
                 <div class="post-buttons">
                     <button class="delete-btn" data-id="${post.ID}">🗑️ Supprimer</button>
                 </div>
+                <h4>Comments :</h4>
                 <div id="comments-${post.ID}" class="comments-container">
-                    <!-- Les commentaires seront chargés ici -->
                 </div>
             `;
 
@@ -409,7 +410,7 @@ document.addEventListener("DOMContentLoaded", function () {
             displayModRequests(modRequests);
         } catch (error) {
             console.error("Erreur:", error);
-            modRequestList.innerHTML = `<p>Impossible de charger les demandes. ${error.message}</p>`;
+            modRequestList.innerHTML = `<p>Impossible de charger les demandes.</p>`;
         }
     }
 

@@ -50,32 +50,32 @@ document.addEventListener("DOMContentLoaded", function () {
     // Fonction pour afficher les posts
     function displayPosts(posts) {
         postsContainer.innerHTML = ""; // Nettoyage avant affichage
-
+    
         posts.forEach(post => {
             const title = post.Title || "Titre inconnu";
             const content = post.Content || "Aucun contenu disponible.";
-            const author = post.UserID || "Anonyme";
+            const author = post.Author || "Anonyme";
             const date = post.CreatedAt ? new Date(post.CreatedAt).toLocaleDateString() : "Date inconnue";
-
+    
             const imageHtml = post.ImagePath && post.ImagePath.trim() !== "" 
-                ? `<img src="/${post.ImagePath}" alt="Image du post" style="max-width: 300px;">`
-                : "";
+            ? `<img src="/${post.ImagePath}" alt="Image du post" style="max-width: 300px; display: block; margin: 0 auto; margin-bottom: 10px;">`
+            : "";
 
             const postElement = document.createElement("div");
             postElement.className = "post";
             postElement.innerHTML = `
+                <h2>Post :</h2>
                 <h3>${title}</h3>
                 <p>${content}</p>
-                <small>Posté par ${author} le ${date}</small>
-                ${imageHtml}
+                ${imageHtml} <!-- L'image est maintenant au-dessus de la date -->
+                <small style="display: block; margin-top: 10px;">Posté par ${author} le ${date}</small>
                 <div class="post-buttons">
                     <button class="delete-btn" data-id="${post.ID}">🗑️ Supprimer</button>
-                    <button class="report-btn" data-id="${post.ID}">⚠️ Signaler</button>
                 </div>
+                <h4>Comments :</h4>
                 <div id="comments-${post.ID}" class="comments-container">
-                    <!-- Les commentaires seront chargés ici -->
                 </div>
-            `;
+            `;    
 
             postsContainer.appendChild(postElement);
 

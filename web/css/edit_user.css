@@ -78,4 +78,14 @@ input[type="password"]:focus {
     z-index: 1000;
 }a.retour:hover {
     background: #8f0101;
+}.moderator-btn {
+    background: #ff4500;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 20px;
+    font-weight: bold;
+    width: 30%; 
 }

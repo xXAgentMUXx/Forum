@@ -24,7 +24,7 @@
     <h3>Devenir modérateur :</h3>
 
     {{ if and (ne .Role "moderator") (ne .Role "admin") }}
-    <button onclick="requestModerator('{{ .UserID }}')">Demander à être modérateur</button>
+    <button class="moderator-btn" onclick="requestModerator('{{ .UserID }}')">Demander à être modérateur</button>
     {{ end }}
 
     <a href="/forum" class="retour">Retour au forum</a>

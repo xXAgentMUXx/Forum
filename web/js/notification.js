@@ -2,7 +2,19 @@
 document.addEventListener("DOMContentLoaded", function () {
     fetchNotifications();
     setInterval(fetchNotifications, 10000);
+
+    // check if you connect to forum
+    if (window.location.pathname === "/forum") {
+        closeNotificationBox();
+    }
 });
+
+// function to close the box when you are in the forum
+function closeNotificationBox() {
+    let notifBox = document.getElementById("notification-box");
+    notifBox.classList.add("hidden");
+    notifBox.style.display = "none";
+}
 
 // Toggles the visibility of the notification box
 function toggleNotificationBox() {
