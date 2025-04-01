@@ -7,34 +7,31 @@ document.addEventListener("DOMContentLoaded", function () {
         fetch("/check-session")
             .then(response => {
                 if (response.status === 401) {
-                    window.location.href = "/login"; // Rediriger vers la page de connexion si la session est invalide
+                    window.location.href = "/login"; // Rediriger vers la connexion si la session est invalide
+                    return;
+                }
+                return response.json(); // Convertir la réponse en JSON
+            })
+            .then(data => {
+                if (!data) return;
+    
+                console.log("Utilisateur:", data.userID, "| Rôle:", data.role);
+    
+                // Redirection conditionnelle en fonction du rôle
+                if (window.location.pathname === "/admin" && data.role !== "admin") {
+                    console.warn("❌ Accès interdit: Vous devez être admin !");
+                    window.location.href = "/forbidden"; // Page d'accès interdit
                 } else {
-                    // Session valide, on peut récupérer les informations de l'utilisateur
-                    response.json().then(data => {
-                        // Vérifier si l'email est celui de l'admin
-                        if (data.email === "test@outlook.fr") {
-                            // Afficher le bouton admin
-                            document.getElementById("admin-button").style.display = "block";
-                        } else {
-                            // Cacher le bouton admin
-                            document.getElementById("admin-button").style.display = "none";
-                        }
-
-                        // Charger les posts et autres données
-                        fetchPosts();
-                        fetchReports();
-                        fetchCategories();
-                        fetchModRequests();
-                        loadModerators();
-                    });
+                    fetchPosts(); // Charger les posts si l'utilisateur est autorisé
+                    fetchComments();
                 }
             })
             .catch(error => {
                 console.error("Erreur lors de la vérification de la session:", error);
-                window.location.href = "/login"; // Rediriger vers la page de connexion en cas d'erreur
+                window.location.href = "/login"; // Rediriger en cas d'erreur
             });
     }
-
+    
     // Fonction pour récupérer les posts
     async function fetchPosts() {
         try {

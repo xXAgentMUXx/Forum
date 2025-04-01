@@ -10,6 +10,11 @@ body {
     font-size: 28px;
     margin-bottom: 20px;
     text-align: center; 
+}h2 {
+    color: #ffcc00;
+    font-size: 28px;
+    margin-bottom: 20px;
+    text-align: center; 
 }form {
     background-color: #252535;
     padding: 20px;

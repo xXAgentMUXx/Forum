@@ -5,32 +5,26 @@ body {
     text-align: center;
     margin: 0;
     padding: 0;
-}
-
-h1 {
+}h1 {
     background-color: #2d2d44;
+    flex-grow: 1; 
+    text-align: center;
     padding: 20px;
-    margin: 0;
+    margin: 0 auto;
     font-size: 24px;
     text-transform: uppercase;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-}
-
-.admin-container {
+}.admin-container {
     max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
-}
-
-.section {
+}.section {
     background: #252535;
     padding: 20px;
     margin: 20px 0;
     border-radius: 5px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-}
-
-button {
+}button {
     background: #ff4500;
     color: white;
     padding: 10px 15px;
@@ -39,11 +33,50 @@ button {
     cursor: pointer;
     margin: 5px;
     font-weight: bold;
-}
-
-button:hover {
+}button:hover {
     background: #cc3700;
+}.approve { background: #4CAF50; color: white; }
+.reject { background: #f44336; color: white; 
+} header {
+    display: flex;
+    align-items: center;
+    justify-content: center; 
+    padding: 20px;
+    background-color: #2d2d44;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    position: relative; 
 }
 
-.approve { background: #4CAF50; color: white; }
-.reject { background: #f44336; color: white; }
+nav {
+    position: absolute;
+    right: 20px; 
+    display: flex;
+    gap: 10px;
+}
+
+nav a {
+    display: inline-block;
+    padding: 10px 15px;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: bold;
+    
+}
+
+nav a:first-child {
+    background: #007bbf; 
+    color: white;
+}
+
+nav a:first-child:hover {
+    background: #0056b3;
+}
+
+nav a:last-child {
+    background: #ff0000; 
+    color: white;
+}
+
+nav a:last-child:hover {
+    background: #8f0101;
+}
