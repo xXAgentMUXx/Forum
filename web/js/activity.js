@@ -34,7 +34,6 @@ async function fetchActivity() {
             div.innerHTML = `<h3>${post.title}</h3><p>${post.content}</p><small>${new Date(post.created_at).toLocaleString()}</small>`;
             postContainer.appendChild(div);
         });
-
         // Display the likes/dislike in the designated container
         let likeContainer = document.getElementById("my-likes");
         data.likes.forEach(like => {
@@ -43,7 +42,6 @@ async function fetchActivity() {
             div.innerHTML = `<p>Vous avez ${like.type === "like" ? "aimé" : "disliké"} : <strong>${like.title}</strong></p>`;
             likeContainer.appendChild(div);
         });
-
         // Display the comments in the designated container
         let commentContainer = document.getElementById("my-comments");
         data.comments.forEach(comment => {

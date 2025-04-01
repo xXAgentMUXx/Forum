@@ -68,6 +68,28 @@ DB.Exec(`
     FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
 );
 `)
+DB.Exec(`
+    CREATE TABLE IF NOT EXISTS promotion_requests (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id     TEXT NOT NULL,
+    status      TEXT CHECK(status IN ('pending', 'approved', 'rejected')) DEFAULT 'pending',
+    requested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    approved_by TEXT NULL,
+    approved_at TIMESTAMP NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (approved_by) REFERENCES users(id)
+);
+`)
+DB.Exec(`
+    CREATE TABLE users (
+    id          TEXT PRIMARY KEY,
+    email       TEXT UNIQUE NOT NULL,
+    username    TEXT UNIQUE NOT NULL,
+    password    TEXT NULL,
+    role        TEXT CHECK(role IN ('guest', 'user', 'moderator', 'admin')) DEFAULT 'user',
+    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+`)
 }
 
 // Creat the template with the html file and URL
@@ -207,6 +229,30 @@ func GetUserFromSession(r *http.Request) (string, error) {
     return "", fmt.Errorf("No valid session found")
 }
 
+func GetUserFromSessionRole(r *http.Request) (string, string, error) {
+    cookie, err := r.Cookie("session_token")
+    if err == nil {
+        var userID, role string
+        // Requête modifiée pour récupérer le rôle depuis `users`
+        err = DB.QueryRow(`
+            SELECT users.id, users.role 
+            FROM users 
+            JOIN sessions ON users.id = sessions.user_id 
+            WHERE sessions.id = ?`, cookie.Value).Scan(&userID, &role)
+
+        if err == nil {
+            return userID, role, nil
+        }
+    }
+
+    oauthCookie, err := r.Cookie("session")
+    if err == nil && oauthCookie.Value != "" {
+        return oauthCookie.Value, "user", nil // Par défaut, rôle "user" pour OAuth
+    }
+
+    return "", "", fmt.Errorf("No valid session found")
+}
+
 // Function to deletes expired sessions from the database
 func CleanupExpiredSessions() {
 	DB.Exec("DELETE FROM sessions WHERE expires_at <= CURRENT_TIMESTAMP")
@@ -242,12 +288,31 @@ func LogoutUser(w http.ResponseWriter, r *http.Request) {
 
 // Function to checks if the user is authenticated by verifying their session
 func CheckSession(w http.ResponseWriter, r *http.Request) {
-    userID, err := GetUserFromSession(r)
+    var userID, role string
+    var err error
+
+    // Vérifier la session avec GetUserFromSession
+    userID, err = GetUserFromSession(r)
     if err == nil {
-        fmt.Println("✅ CheckSession: Utilisateur connecté:", userID)
+        // Une session existe, on tente de récupérer aussi le rôle
+        _, role, err = GetUserFromSessionRole(r)
+        if err != nil {
+            role = "user" // Par défaut, on met "user" si on ne peut pas récupérer le rôle
+        }
+
+        fmt.Printf("✅ CheckSession: Utilisateur connecté: %s | Rôle: %s\n", userID, role)
+
+        // Envoi de la réponse avec l'ID et le rôle
+        w.Header().Set("Content-Type", "application/json")
         w.WriteHeader(http.StatusOK)
+        json.NewEncoder(w).Encode(map[string]string{
+            "userID": userID,
+            "role":   role,
+        })
         return
     }
+
+    fmt.Println("❌ CheckSession: Aucun utilisateur connecté")
     http.Error(w, "Unauthorized", http.StatusUnauthorized)
 }
 // This function is a middleware that checks if the user is authenticated before allowing access
@@ -380,3 +445,43 @@ func GetUserActivity(w http.ResponseWriter, r *http.Request) {
     json.NewEncoder(w).Encode(activity)
 }
 
+func RoleMiddleware(requiredRole string, next http.HandlerFunc) http.HandlerFunc {
+    return func(w http.ResponseWriter, r *http.Request) {
+        userID, userRole, err := GetUserFromSessionRole(r)
+        if err != nil {
+            fmt.Println("❌ RoleMiddleware: Aucun utilisateur authentifié")
+            http.Redirect(w, r, "/login", http.StatusFound)
+            return
+        }
+
+        fmt.Println("👤 Utilisateur:", userID, "| Rôle:", userRole, "| Rôle requis:", requiredRole)
+
+        // Définition de la hiérarchie des rôles
+        roleHierarchy := map[string]int{
+            "guest":     0,
+            "user":      1,
+            "moderator": 2,
+            "admin":     3,
+        }
+
+        userLevel, userExists := roleHierarchy[userRole]
+        requiredLevel, requiredExists := roleHierarchy[requiredRole]
+
+        // Vérifier que les rôles existent bien
+        if !userExists || !requiredExists {
+            fmt.Println("❌ Rôle inconnu:", userRole, "ou", requiredRole)
+            http.Error(w, "Erreur interne", http.StatusInternalServerError)
+            return
+        }
+
+        // Vérifier si l'utilisateur a le rôle requis ou un rôle supérieur
+        if userLevel < requiredLevel {
+            fmt.Println("❌ Accès interdit: Rôle insuffisant")
+            http.Error(w, "Accès interdit", http.StatusForbidden)
+            return
+        }
+
+        fmt.Println("✅ Accès accordé")
+        next(w, r)
+    }
+}

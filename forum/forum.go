@@ -3,7 +3,9 @@ package forum
 import (
 	"database/sql"
 	"encoding/json"
+	"log"
 	"net/http"
+	"text/template"
 	"time"
 
 	"Forum/auth"
@@ -13,8 +15,45 @@ import (
 
 // Function to display the templates for connected user
 func ServeForum(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "web/html/forum.html")
+    userID, err := auth.GetUserFromSession(r)
+    if err != nil {
+        http.Error(w, "Unauthorized", http.StatusUnauthorized)
+        return
+    }
+
+    // Récupérer le rôle et l'email de l'utilisateur
+    var role, email string
+    err = auth.DB.QueryRow("SELECT role, email FROM users WHERE id = ?", userID).Scan(&role, &email)
+    if err != nil {
+		log.Printf("Error retrieving user data: %v", err)
+        http.Error(w, "Error retrieving user data", http.StatusInternalServerError)
+        return
+    }
+
+    // Passer le rôle et l'email au template
+    data := struct {
+        UserID string
+        Role   string
+        Email  string
+    }{
+        UserID: userID,
+        Role:   role,
+        Email:  email,
+    }
+
+    // Charger et exécuter le template
+    tmpl, err := template.ParseFiles("web/html/forum.html")
+    if err != nil {
+        http.Error(w, "Error loading template", http.StatusInternalServerError)
+        return
+    }
+
+    err = tmpl.Execute(w, data)
+    if err != nil {
+        http.Error(w, "Error rendering template", http.StatusInternalServerError)
+    }
 }
+
 
 // Function to display the templates for non-connected user
 func ServeForumInvite(w http.ResponseWriter, r *http.Request) {
@@ -79,7 +118,7 @@ func LikeContent(w http.ResponseWriter, r *http.Request, contentType string) {
 		err = auth.DB.QueryRow("SELECT user_id FROM comments WHERE id = ?", contentID).Scan(&ownerID)
 	}
 	if err == nil && ownerID != userID {
-		CreateNotification(ownerID, contentID, "like", "Your post/comment received a "+typeLike)
+		CreateNotification(ownerID, contentID, "like", ""+typeLike)
 	}
 	if err != nil {
 		http.Error(w, "Error updating like status", http.StatusInternalServerError)
@@ -87,7 +126,7 @@ func LikeContent(w http.ResponseWriter, r *http.Request, contentType string) {
 	}
 	// Create a notification for the owner of the post or comments
 	if err == nil && ownerID != userID {
-		CreateNotification(ownerID, contentID, "like", "Your post/comment received a "+typeLike)
+		CreateNotification(ownerID, contentID, "like", ""+typeLike)
 	}
 	// Send a JSON response
 	w.Header().Set("Content-Type", "application/json")
