@@ -182,7 +182,7 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 document.addEventListener("DOMContentLoaded", function () {
-    const reportsContainer = document.getElementById("reports");
+    const reportsContainer = document.getElementById("reports-list");
 
 // Function to fetch reports
 async function fetchReports() {
@@ -209,19 +209,20 @@ function displayReports(reports) {
         const postID = report.post_id || "Inconnu";
         const reason = report.reason || "Aucune raison";
         const status = report.status || "En attente";
+        const reportID = report.id; 
 
         const reportElement = document.createElement("div");
         reportElement.className = "report";
+        reportElement.setAttribute("data-id", reportID); 
         reportElement.innerHTML = `
             <h3>Rapport sur le post ${postID}</h3>
             <p>Raison : ${reason}</p>
             <p>Status : ${status}</p>
             <div class="report-buttons">
-                <button class="resolve-btn" data-id="${report.id}">Résoudre</button>
-                <button class="reject-btn" data-id="${report.id}">Rejeter</button>
+                <button class="resolve-btn" data-id="${reportID}">Résoudre</button>
+                <button class="reject-btn" data-id="${reportID}">Rejeter</button>
             </div>
         `;
-
         reportsContainer.appendChild(reportElement);
 
         // Add event for the reports like resolve or reject it
@@ -255,7 +256,8 @@ async function resolveReport(reportID) {
 
         if (response.ok) {
             alert("Rapport résolu !");
-            fetchReports();  // Reload report after resolution
+            removeReportFromDisplay(reportID);
+            
         } else {
             alert("Erreur lors de la résolution du rapport !");
         }
@@ -276,13 +278,24 @@ async function rejectReport(reportID) {
 
         if (response.ok) {
             alert("Rapport rejeté !");
-            fetchReports();  // Reload report after reject
+            removeReportFromDisplay(reportID);
+            
         } else {
             alert("Erreur lors du rejet du rapport !");
         }
     } catch (error) {
         console.error("Erreur lors du rejet du rapport:", error);
         alert("Une erreur s'est produite.");
+    }
+}
+
+// Function to supress the report after be done
+function removeReportFromDisplay(reportID) {
+    const reportElement = document.querySelector(`.report[data-id="${reportID}"]`);
+    if (reportElement) {
+        reportElement.remove();  // Supprime l'élément du DOM
+    } else {
+        console.log(`Rapport avec ID ${reportID} non trouvé dans l'affichage.`);
     }
 }
 

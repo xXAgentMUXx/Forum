@@ -134,9 +134,16 @@ func ResolveReport(w http.ResponseWriter, r *http.Request) {
         http.Error(w, "Error resolving report", http.StatusInternalServerError)
         return
     }
+    // Delete the report after resolving it
+    _, err = auth.DB.Exec("DELETE FROM reports WHERE id = ?", reportID)
+    if err != nil {
+        http.Error(w, "Error deleting resolved report", http.StatusInternalServerError)
+        return
+    }
     w.Header().Set("Content-Type", "application/json")
-    json.NewEncoder(w).Encode(map[string]string{"message": "Report resolved successfully"})
+    json.NewEncoder(w).Encode(map[string]string{"message": "Report resolved and deleted successfully"})
 }
+
 
 // Function to allows the admin to reject a report
 func RejectReport(w http.ResponseWriter, r *http.Request) {
@@ -155,9 +162,16 @@ func RejectReport(w http.ResponseWriter, r *http.Request) {
         http.Error(w, "Error rejecting report", http.StatusInternalServerError)
         return
     }
+    // Delete the report after rejecting it
+    _, err = auth.DB.Exec("DELETE FROM reports WHERE id = ?", reportID)
+    if err != nil {
+        http.Error(w, "Error deleting rejected report", http.StatusInternalServerError)
+        return
+    }
     w.Header().Set("Content-Type", "application/json")
-    json.NewEncoder(w).Encode(map[string]string{"message": "Report rejected successfully"})
+    json.NewEncoder(w).Encode(map[string]string{"message": "Report rejected and deleted successfully"})
 }
+
 
 // Function to fetches all reports from the database
 func GetReports(w http.ResponseWriter, r *http.Request) {
@@ -457,3 +471,4 @@ func GetModerators(w http.ResponseWriter, r *http.Request) {
     w.Header().Set("Content-Type", "application/json")
     json.NewEncoder(w).Encode(moderators)
 }
+
