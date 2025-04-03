@@ -67,21 +67,49 @@ function fetchNotifications() {
                 deleteButton.innerText = "Supprimer";
                 deleteButton.classList.add("delete-notif");
                 deleteButton.onclick = () => deleteNotification(notif.id, notifElement); 
+
+                // Check if username contain email adress
+                let username = notif.username;
+                if (
+                    username.includes("@gmail.com") ||
+                    username.includes("@ynov.com") ||
+                    username.includes("@yahoo.com") ||
+                    username.includes("@outlook.com") ||
+                    username.includes("@hotmail.com") ||
+                    username.includes("@icloud.com") ||
+                    username.includes("@live.com") ||
+                    username.includes("@aol.com") ||
+                    username.includes("@yandex.com") ||
+                    username.includes("@protonmail.com") ||
+                    username.includes("@zoho.com") ||
+                    username.includes("@mail.com") ||
+                    username.includes("@msn.com") ||
+                    username.includes("@ymail.com") ||
+                    username.includes("@comcast.net") ||
+                    username.includes("@mail.ru") ||
+                    username.includes("@gnail.com") ||
+                    username.includes("@tutanota.com") ||
+                    username.includes("@fastmail.com") ||
+                    username.includes("@gmx.com")
+                ) {
+                    // Replace by this word if there is an email
+                    username = "Quelqu'un";
+                }
                 // Fetch If the notification is for a comment or a like
                 if (notif.action === "comment") {
                     let shortContent = notif.content.length > 50 ? notif.content.substring(0, 50) + "..." : notif.content;
                     notifElement.innerHTML = `
-                        <p><strong>${notif.username}</strong> a commenté votre post</p>
+                        <p><strong>${username}</strong> a commenté votre post</p>
                         <p>"${shortContent}"</p>
                         <small>${new Date(notif.created_at).toLocaleString()}</small>
                     `;
                 } else if (notif.action === "like") {
                     notifElement.innerHTML = `
-                        <p><strong>${notif.username}</strong> a ${notif.content} votre post/commentaire</p>
+                        <p><strong>${username}</strong> a ${notif.content} votre post/commentaire</p>
                         <small>${new Date(notif.created_at).toLocaleString()}</small>
                     `;
                 }
-                 // Add the delete button to the notification element
+                // Add the delete button to the notification element
                 notifElement.appendChild(deleteButton);
                 notifDropdown.appendChild(notifElement);
             });

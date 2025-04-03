@@ -6,84 +6,85 @@ document.addEventListener("DOMContentLoaded", function () {
         fetch("/check-session")
             .then(response => {
                 if (response.status === 401) {
-                    window.location.href = "/login"; // Rediriger vers la connexion si la session est invalide
+                    window.location.href = "/login"; // Redirect to login if the session is invalid
                     return;
                 }
-                return response.json(); // Convertir la réponse en JSON
+                return response.json(); // Convert the response to JSON
             })
             .then(data => {
                 if (!data) return;
     
-                console.log("Utilisateur:", data.userID, "| Rôle:", data.role);
+                console.log("User:", data.userID, "| Role:", data.role);
     
-                // Redirection conditionnelle en fonction du rôle
+                // Conditional redirection based on user role
                 if (window.location.pathname === "/moderator" && data.role !== "moderator") {
-                    console.warn("❌ Accès interdit: Vous devez être moderateur !");
-                    window.location.href = "/forbidden"; // Page d'accès interdit
+                    console.warn("❌ Access denied: You must be a moderator!");
+                    window.location.href = "/forbidden"; 
                 } else {
-                    fetchPosts(); // Charger les posts si l'utilisateur est autorisé
+                    fetchPosts(); // Load posts if the user is authorized
                     fetchComments();
                 }
             })
             .catch(error => {
-                console.error("Erreur lors de la vérification de la session:", error);
-                window.location.href = "/login"; // Rediriger en cas d'erreur
+                console.error("Error during session check:", error);
+                window.location.href = "/login"; 
             });
     }
     
-    // Fonction pour récupérer les posts
+    // Function to fetch posts
     async function fetchPosts() {
         try {
             const response = await fetch("/posts");
-            if (!response.ok) throw new Error("Erreur lors de la récupération des posts");
+            if (!response.ok) throw new Error("Error fetching posts");
 
             const posts = await response.json();
-            if (!Array.isArray(posts)) throw new Error("Données invalides reçues du serveur.");
+            if (!Array.isArray(posts)) throw new Error("Invalid data received from the server.");
 
             displayPosts(posts);
         } catch (error) {
-            console.error("Erreur:", error);
-            postsContainer.innerHTML = "<p>Impossible de charger les posts.</p>";
+            console.error("Error:", error);
+            postsContainer.innerHTML = "<p>Unable to load posts.</p>";
         }
     }
 
-    // Fonction pour afficher les posts
+    // Function to display posts
     function displayPosts(posts) {
-        postsContainer.innerHTML = ""; // Nettoyage avant affichage
-    
+        postsContainer.innerHTML = ""; 
+
+        // Display posts
         posts.forEach(post => {
-            const title = post.Title || "Titre inconnu";
-            const content = post.Content || "Aucun contenu disponible.";
-            const author = post.Author || "Anonyme";
-            const date = post.CreatedAt ? new Date(post.CreatedAt).toLocaleDateString() : "Date inconnue";
+            const title = post.Title || "Unknown title";
+            const content = post.Content || "No content available.";
+            const author = post.Author || "Anonymous";
+            const date = post.CreatedAt ? new Date(post.CreatedAt).toLocaleDateString() : "Unknown date";
     
             const imageHtml = post.ImagePath && post.ImagePath.trim() !== "" 
-            ? `<img src="/${post.ImagePath}" alt="Image du post" style="max-width: 300px; display: block; margin: 0 auto; margin-bottom: 10px;">`
+            ? `<img src="/${post.ImagePath}" alt="Post image" style="max-width: 300px; display: block; margin: 0 auto; margin-bottom: 10px;">`
             : "";
 
             const postElement = document.createElement("div");
             postElement.className = "post";
             postElement.innerHTML = `
-                <h2>Post :</h2>
+                <h2>Post:</h2>
                 <h3>${title}</h3>
                 <p>${content}</p>
                 ${imageHtml}
-                <small style="display: block; margin-top: 10px;">Posté par ${author} le ${date}</small>
+                <small style="display: block; margin-top: 10px;">Posted by ${author} on ${date}</small>
                 <div class="post-buttons">
-                    <button class="delete-btn" data-id="${post.ID}">🗑️ Supprimer</button>
-                    <button class="report-btn" data-id="${post.ID}">⚠️ Signaler</button>
+                    <button class="delete-btn" data-id="${post.ID}">🗑️ Delete</button>
+                    <button class="report-btn" data-id="${post.ID}">⚠️ Report</button>
                 </div>
-                <h4>Comments :</h4>
+                <h4>Comments:</h4>
                 <div id="comments-${post.ID}" class="comments-container">
                 </div>
             `;    
 
             postsContainer.appendChild(postElement);
 
-            // Appeler la fonction pour charger les commentaires du post
+            // Call function to load comments for the post
             fetchComments(post.ID);
 
-            // Ajouter les gestionnaires d'événements aux boutons
+            // Add event listeners to the buttons
             const deleteButtons = document.querySelectorAll(".delete-btn");
             const reportButtons = document.querySelectorAll(".report-btn");
 
@@ -93,7 +94,6 @@ document.addEventListener("DOMContentLoaded", function () {
                     deletePost(postID);
                 });
             });
-
             reportButtons.forEach(button => {
                 button.addEventListener("click", function() {
                     const postID = this.getAttribute("data-id");
@@ -103,34 +103,34 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // Fonction pour récupérer et afficher les commentaires d'un post
+    // Function to fetch and display comments for a post
     function fetchComments(postID) {
-        fetch(`/comments?post_id=${postID}`) // Récupérer les commentaires depuis le serveur
+        fetch(`/comments?post_id=${postID}`) // Fetch comments from the server
             .then(response => response.json())
             .then(comments => {
                 let commentContainer = document.getElementById(`comments-${postID}`);
-                commentContainer.innerHTML = ""; // Effacer les anciens commentaires
+                commentContainer.innerHTML = ""; // Clear previous comments
 
                 comments.forEach(comment => {
                     let commentID = comment.ID || comment.id;
 
-                    // Créer un nouvel élément de commentaire
+                    // Create a new comment element
                     let commentElement = document.createElement("div");
                     commentElement.classList.add("comment");
                     commentElement.innerHTML = `
                         <p>${comment.content}</p>
                     `;
 
-                    // Ajouter le commentaire au conteneur
+                    // Add the comment to the container
                     commentContainer.appendChild(commentElement);
                 });
             })
-            .catch(error => console.error("Erreur lors du chargement des commentaires :", error));
+            .catch(error => console.error("Error loading comments:", error));
     }
 
-    // Fonction pour supprimer un post
+    // Function to delete a post
     async function deletePost(postID) {
-        if (!confirm("Voulez-vous vraiment supprimer ce post ?")) return;
+        if (!confirm("Are you sure you want to delete this post?")) return;
 
         try {
             const response = await fetch("/post/delete_admin", {
@@ -138,41 +138,41 @@ document.addEventListener("DOMContentLoaded", function () {
                 headers: { "Content-Type": "application/x-www-form-urlencoded" },
                 body: `id=${postID}`
             });
-
+            // Reload posts after deletion
             if (response.ok) {
-                alert("Post supprimé !");
-                fetchPosts();  // Recharger les posts après suppression
+                alert("Post deleted!");
+                fetchPosts();  
             } else {
-                alert("Erreur lors de la suppression !");
+                alert("Error deleting the post!");
             }
         } catch (error) {
-            console.error("Erreur lors de la suppression du post:", error);
-            alert("Une erreur s'est produite.");
+            console.error("Error deleting the post:", error);
+            alert("An error occurred.");
         }
     }
 
-    // Fonction pour signaler un post
+    // Function to report a post
     async function reportPost(postID) {
-        const reason = prompt("Pourquoi signalez-vous ce post ?");
+        const reason = prompt("Why are you reporting this post?");
         if (!reason) return;
         
         try {
             const response = await fetch("/report/post", {
                 method: "POST",
                 headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                body: `id=${postID}&moderator_id=1&reason=${encodeURIComponent(reason)}` // Remplacez 1 par l'ID du modérateur réel
+                body: `id=${postID}&moderator_id=1&reason=${encodeURIComponent(reason)}` 
             });
     
             if (response.ok) {
-                alert("Post signalé à l'administration !");
+                alert("Post reported to the administration!");
             } else {
-                alert("Erreur lors du signalement !");
+                alert("Error reporting the post!");
             }
         } catch (error) {
-            console.error("Erreur lors du signalement du post:", error);
-            alert("Une erreur s'est produite.");
+            console.error("Error reporting the post:", error);
+            alert("An error occurred.");
         }
     }
-    // Récupérer et afficher les posts dès que le DOM est chargé
+    // Fetch and display posts as soon as the DOM is loaded
     fetchPosts();
 });

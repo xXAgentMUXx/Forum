@@ -2,37 +2,37 @@ document.addEventListener("DOMContentLoaded", function () {
     checkSessionAndRedirectToAdmin();
     const postsContainer = document.getElementById("posts");
 
-    // Fonction pour vérifier la session et rediriger si nécessaire
+    // Function to redirect to the /forum for security, if session is invalid
     function checkSessionAndRedirectToAdmin() {
         fetch("/check-session")
             .then(response => {
                 if (response.status === 401) {
-                    window.location.href = "/login"; // Rediriger vers la connexion si la session est invalide
+                    window.location.href = "/login"; 
                     return;
                 }
-                return response.json(); // Convertir la réponse en JSON
+                return response.json(); 
             })
             .then(data => {
                 if (!data) return;
     
                 console.log("Utilisateur:", data.userID, "| Rôle:", data.role);
     
-                // Redirection conditionnelle en fonction du rôle
+                // Redirect in function of the role of the user
                 if (window.location.pathname === "/admin" && data.role !== "admin") {
                     console.warn("❌ Accès interdit: Vous devez être admin !");
-                    window.location.href = "/forbidden"; // Page d'accès interdit
+                    window.location.href = "/forbidden"; 
                 } else {
-                    fetchPosts(); // Charger les posts si l'utilisateur est autorisé
+                    fetchPosts(); 
                     fetchComments();
                 }
             })
             .catch(error => {
                 console.error("Erreur lors de la vérification de la session:", error);
-                window.location.href = "/login"; // Rediriger en cas d'erreur
+                window.location.href = "/login"; 
             });
     }
 
-    // Fonction pour récupérer les posts
+    // Function to fetch the posts
     async function fetchPosts() {
         try {
             const response = await fetch("/posts");
@@ -48,10 +48,11 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    // Fonction pour afficher les posts
+    // Function to display the posts
     function displayPosts(posts) {
-        postsContainer.innerHTML = ""; // Nettoyage avant affichage
+        postsContainer.innerHTML = ""; 
 
+        // Display the templates
         posts.forEach(post => {
             const title = post.Title || "Titre inconnu";
             const content = post.Content || "Aucun contenu disponible.";
@@ -80,10 +81,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
             postsContainer.appendChild(postElement);
 
-            // Appeler la fonction pour charger les commentaires du post
+            // Call function to load commentary
             fetchComments(post.ID);
 
-            // Ajouter les gestionnaires d'événements aux boutons
+            // Add delete bouton
             const deleteButtons = document.querySelectorAll(".delete-btn");
 
             deleteButtons.forEach(button => {
@@ -95,18 +96,19 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // Fonction pour récupérer et afficher les commentaires d'un post
+    // Function to fetch comments
     function fetchComments(postID) {
-        fetch(`/comments?post_id=${postID}`) // Récupérer les commentaires depuis le serveur
+        fetch(`/comments?post_id=${postID}`) 
             .then(response => response.json())
             .then(comments => {
                 let commentContainer = document.getElementById(`comments-${postID}`);
-                commentContainer.innerHTML = ""; // Effacer les anciens commentaires
+                commentContainer.innerHTML = ""; 
 
+                // Display the comments
                 comments.forEach(comment => {
                     let commentID = comment.ID || comment.id;
 
-                    // Créer un nouvel élément de commentaire
+
                     let commentElement = document.createElement("div");
                     commentElement.classList.add("comment");
                     commentElement.innerHTML = `
@@ -114,11 +116,11 @@ document.addEventListener("DOMContentLoaded", function () {
                         <button class="delete-comment-btn" data-id="${commentID}">🗑️ Supprimer</button>
                     `;
 
-                    // Ajouter le commentaire au conteneur
+                    // Add to the container
                     commentContainer.appendChild(commentElement);
                 });
 
-                // Ajouter les gestionnaires d'événements pour supprimer les commentaires
+                // Add event for the commentary
                 const deleteCommentButtons = document.querySelectorAll(".delete-comment-btn");
                 deleteCommentButtons.forEach(button => {
                     button.addEventListener("click", function() {
@@ -130,7 +132,7 @@ document.addEventListener("DOMContentLoaded", function () {
             .catch(error => console.error("Erreur lors du chargement des commentaires :", error));
     }
 
-    // Fonction pour supprimer un post
+    // Function to delete a post
     async function deletePost(postID) {
         if (!confirm("Voulez-vous vraiment supprimer ce post ?")) return;
 
@@ -140,10 +142,10 @@ document.addEventListener("DOMContentLoaded", function () {
                 headers: { "Content-Type": "application/x-www-form-urlencoded" },
                 body: `id=${postID}`
             });
-
+            // reload posts after suppresion
             if (response.ok) {
                 alert("Post supprimé !");
-                fetchPosts();  // Recharger les posts après suppression
+                fetchPosts();  
             } else {
                 alert("Erreur lors de la suppression !");
             }
@@ -153,7 +155,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    // Fonction pour supprimer un commentaire
+    // Function to delete commentary
     async function deleteComment(commentID) {
         if (!confirm("Voulez-vous vraiment supprimer ce commentaire ?")) return;
 
@@ -163,10 +165,10 @@ document.addEventListener("DOMContentLoaded", function () {
                 headers: { "Content-Type": "application/x-www-form-urlencoded" },
                 body: `id=${commentID}`
             });
-
+            // Reload comments after suprresion
             if (response.ok) {
                 alert("Commentaire supprimé !");
-                fetchPosts();  // Recharger les posts après suppression
+                fetchPosts(); 
             } else {
                 alert("Erreur lors de la suppression du commentaire !");
             }
@@ -175,14 +177,14 @@ document.addEventListener("DOMContentLoaded", function () {
             alert("Une erreur s'est produite.");
         }
     }
-    // Récupérer et afficher les posts dès que le DOM est chargé
+    // Retrieves posts if DOM is charged
     fetchPosts();
 });
 
 document.addEventListener("DOMContentLoaded", function () {
     const reportsContainer = document.getElementById("reports");
 
-
+// Function to fetch reports
 async function fetchReports() {
     try {
         const response = await fetch("/report");
@@ -198,10 +200,11 @@ async function fetchReports() {
     }
 }
 
-// Fonction pour afficher les rapports
+// Function to display the reports
 function displayReports(reports) {
-    reportsContainer.innerHTML = ""; // Nettoyage avant affichage
+    reportsContainer.innerHTML = ""; 
 
+    // Display the templates
     reports.forEach(report => {
         const postID = report.post_id || "Inconnu";
         const reason = report.reason || "Aucune raison";
@@ -221,7 +224,7 @@ function displayReports(reports) {
 
         reportsContainer.appendChild(reportElement);
 
-        // Ajouter les gestionnaires d'événements pour résoudre ou rejeter un rapport
+        // Add event for the reports like resolve or reject it
         const resolveButtons = document.querySelectorAll(".resolve-btn");
         const rejectButtons = document.querySelectorAll(".reject-btn");
 
@@ -241,7 +244,7 @@ function displayReports(reports) {
     });
 }
 
-// Fonction pour résoudre un rapport
+// Function to resolve report
 async function resolveReport(reportID) {
     try {
         const response = await fetch(`/report/resolve`, {
@@ -252,7 +255,7 @@ async function resolveReport(reportID) {
 
         if (response.ok) {
             alert("Rapport résolu !");
-            fetchReports();  // Recharger les rapports après résolution
+            fetchReports();  // Reload report after resolution
         } else {
             alert("Erreur lors de la résolution du rapport !");
         }
@@ -262,7 +265,7 @@ async function resolveReport(reportID) {
     }
 }
 
-// Fonction pour rejeter un rapport
+// Function to reject report
 async function rejectReport(reportID) {
     try {
         const response = await fetch(`/report/reject`, {
@@ -273,7 +276,7 @@ async function rejectReport(reportID) {
 
         if (response.ok) {
             alert("Rapport rejeté !");
-            fetchReports();  // Recharger les rapports après rejet
+            fetchReports();  // Reload report after reject
         } else {
             alert("Erreur lors du rejet du rapport !");
         }
@@ -283,7 +286,7 @@ async function rejectReport(reportID) {
     }
 }
 
-// Récupérer et afficher les rapports dès que le DOM est chargé
+// Retrieves the report after DOM is loaded
 fetchReports();
 });
 
@@ -292,7 +295,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const createCategoryBtn = document.getElementById("create-category-btn");
     const categoryNameInput = document.getElementById("category-name");
 
-    // Fonction pour récupérer les catégories depuis le serveur
+    // Function to retrieves categories
     async function fetchCategories() {
         try {
             const response = await fetch("/categories");
@@ -308,10 +311,11 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    // Fonction pour afficher les catégories
+    // Function to display categories
     function displayCategories(categories) {
-        categoryList.innerHTML = ""; // Nettoyage avant affichage
+        categoryList.innerHTML = "";
 
+        // Display the templates
         categories.forEach(category => {
             const categoryElement = document.createElement("div");
             categoryElement.className = "category";
@@ -322,7 +326,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
             categoryList.appendChild(categoryElement);
 
-            // Ajouter un gestionnaire d'événement pour supprimer une catégorie
+            // Add event for the categories
             const deleteCategoryButtons = categoryElement.querySelectorAll(".delete-category-btn");
             deleteCategoryButtons.forEach(button => {
                 button.addEventListener("click", function() {
@@ -333,7 +337,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // Fonction pour créer une catégorie
+    // Function to cretae the categories
     async function createCategory() {
     const categoryName = categoryNameInput.value.trim();
 
@@ -348,11 +352,11 @@ document.addEventListener("DOMContentLoaded", function () {
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
             body: `name=${categoryName}`
         });
-
+        // Reload categorie after creation
         if (response.ok) {
             const data = await response.json();
             alert(`Catégorie créée avec succès ! ID de la catégorie : ${data.id}`);
-            fetchCategories();  // Recharger les catégories après création
+            fetchCategories();  
         } else {
             alert("Erreur lors de la création de la catégorie !");
         }
@@ -362,7 +366,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 }
 
-    // Fonction pour supprimer une catégorie
+    // Function to delete a categorie
     async function deleteCategory(categoryID) {
         if (!confirm("Voulez-vous vraiment supprimer cette catégorie ?")) return;
 
@@ -372,10 +376,10 @@ document.addEventListener("DOMContentLoaded", function () {
                 headers: { "Content-Type": "application/x-www-form-urlencoded" },
                 body: `id=${categoryID}`
             });
-
+            //Reload categories after suprresion
             if (response.ok) {
                 alert("Catégorie supprimée !");
-                fetchCategories();  // Recharger les catégories après suppression
+                fetchCategories();  
             } else {
                 alert("Erreur lors de la suppression de la catégorie !");
             }
@@ -385,17 +389,17 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    // Ajouter un gestionnaire d'événement pour créer une catégorie
+    // Add event for the categories
     createCategoryBtn.addEventListener("click", createCategory);
 
-    // Récupérer et afficher les catégories dès que le DOM est chargé
+    // Retrieves categories after DOM is loaded
     fetchCategories();
 });
 
 document.addEventListener("DOMContentLoaded", function () {
     const modRequestList = document.getElementById("mod-request-list");
 
-    // Fonction pour récupérer les demandes de modérateurs
+    // Fonction to fetch moderator request
     async function fetchModRequests() {
         try {
             const response = await fetch("/moderator-requests");
@@ -414,13 +418,14 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    // Fonction pour afficher les demandes de modérateurs
+    // Fonction to display moderator request
     function displayModRequests(modRequests) {
         modRequestList.innerHTML = ""; // Nettoyage avant affichage
-    
+        
+        // Display the templates
         modRequests.forEach(request => {
-            const userID = request.user_id || "Inconnu"; // Assurez-vous d'avoir un userID
-            const username = request.username || "Nom d'utilisateur inconnu";  // Affichage du nom d'utilisateur
+            const userID = request.user_id || "Inconnu"; 
+            const username = request.username || "Nom d'utilisateur inconnu";  
             const status = request.status || "En attente";
     
             const requestElement = document.createElement("div");
@@ -436,30 +441,29 @@ document.addEventListener("DOMContentLoaded", function () {
             `;
             modRequestList.appendChild(requestElement);
     
-            // Ajouter les gestionnaires d'événements pour accepter ou rejeter la demande
+            // Add event for the request
             const acceptButtons = requestElement.querySelectorAll(".accept-btn");
             const rejectButtons = requestElement.querySelectorAll(".reject-btn");
     
             acceptButtons.forEach(button => {
                 button.addEventListener("click", function() {
                     const requestID = this.getAttribute("data-id");
-                    const userID = this.getAttribute("data-user-id");  // Récupérer l'userID ici
-                    handleModRequest(requestID, "accept", userID);  // Passer userID à la fonction
+                    const userID = this.getAttribute("data-user-id");  
+                    handleModRequest(requestID, "accept", userID);  
                 });
             });
     
             rejectButtons.forEach(button => {
                 button.addEventListener("click", function() {
                     const requestID = this.getAttribute("data-id");
-                    const userID = this.getAttribute("data-user-id");  // Récupérer l'userID ici
-                    handleModRequest(requestID, "reject", userID);  // Passer userID à la fonction
+                    const userID = this.getAttribute("data-user-id");  
+                    handleModRequest(requestID, "reject", userID);  
                 });
             });
         });
     }
     
-
-    // Fonction pour accepter ou rejeter une demande de modérateur
+    // Function to accepte or reject moderator request
     async function handleModRequest(requestID, action, userID) {
         const url = action === "accept" ? `/approve-moderator?request_id=${requestID}&user_id=${userID}` : `/reject-moderator?request_id=${requestID}&user_id=${userID}`;
         
@@ -467,12 +471,12 @@ document.addEventListener("DOMContentLoaded", function () {
             const response = await fetch(url, {
                 method: "POST",
                 headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                body: `request_id=${requestID}&user_id=${userID}`  // Ajouter user_id dans le corps de la requête
+                body: `request_id=${requestID}&user_id=${userID}`  
             });
-    
+            // reload request after treatements
             if (response.ok) {
                 alert(`Demande ${action}ée !`);
-                fetchModRequests();  // Recharger les demandes après traitement
+                fetchModRequests();  
             } else {
                 alert("Erreur lors du traitement de la demande !");
             }
@@ -483,16 +487,16 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     
 
-    // Récupérer et afficher les demandes de modérateurs dès que le DOM est chargé
+    //Retrives request after DOM is loaded
     fetchModRequests();
 });
 
 document.addEventListener("DOMContentLoaded", function () {
     const roleUpdateForm = document.getElementById("role-update-form");
 
-    // Fonction pour mettre à jour le rôle d'un utilisateur
+    // Function to update the new role
     roleUpdateForm.addEventListener("submit", async function(event) {
-        event.preventDefault(); // Empêcher l'envoi du formulaire
+        event.preventDefault(); 
 
         const userId = document.getElementById("user-id").value;
         const newRole = document.getElementById("new-role").value;
@@ -521,13 +525,14 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 });
 
+// Function to load the moderator
 async function loadModerators() {
     const response = await fetch("/get-moderators");
     if (response.ok) {
         const moderators = await response.json();
         const moderatorList = document.getElementById("moderator-list");
 
-        moderatorList.innerHTML = ""; // Clear existing list
+        moderatorList.innerHTML = ""; 
 
         moderators.forEach(moderator => {
             const moderatorItem = document.createElement("div");
@@ -543,6 +548,7 @@ async function loadModerators() {
     }
 }
 
+// function to delete moderator role
 async function removeModeratorRole(userID) {
     if (!confirm("Voulez-vous vraiment retirer le rôle de modérateur ?")) return;
 
