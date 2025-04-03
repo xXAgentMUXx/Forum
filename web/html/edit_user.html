@@ -14,12 +14,18 @@
 
         <label for="email">Nouvel Email :</label>
         <input type="email" id="email" name="email" required>
-        
+
         <label for="password">Nouveau Mot de passe :</label>
         <input type="password" id="password" name="password" placeholder="Laissez vide pour ne pas changer">
 
         <button type="submit">Enregistrer</button>
     </form>
+
+    <h3>Devenir modérateur :</h3>
+
+    {{ if and (ne .Role "moderator") (ne .Role "admin") }}
+    <button class="moderator-btn" onclick="requestModerator('{{ .UserID }}')">Demander à être modérateur</button>
+    {{ end }}
 
     <a href="/forum" class="retour">Retour au forum</a>
 </body>

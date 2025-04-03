@@ -58,8 +58,38 @@ func InitDB() {
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	seen BOOLEAN DEFAULT FALSE,
 	FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-
 )`)
+DB.Exec(`
+    CREATE TABLE IF NOT EXISTS reports (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    post_id TEXT NOT NULL,
+    reason TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending',
+    FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
+);
+`)
+DB.Exec(`
+    CREATE TABLE IF NOT EXISTS promotion_requests (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id     TEXT NOT NULL,
+    status      TEXT CHECK(status IN ('pending', 'approved', 'rejected')) DEFAULT 'pending',
+    requested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    approved_by TEXT NULL,
+    approved_at TIMESTAMP NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (approved_by) REFERENCES users(id)
+);
+`)
+DB.Exec(`
+    CREATE TABLE users (
+    id          TEXT PRIMARY KEY,
+    email       TEXT UNIQUE NOT NULL,
+    username    TEXT UNIQUE NOT NULL,
+    password    TEXT NULL,
+    role        TEXT CHECK(role IN ('guest', 'user', 'moderator', 'admin')) DEFAULT 'user',
+    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+`)
 }
 
 // Creat the template with the html file and URL
@@ -199,6 +229,30 @@ func GetUserFromSession(r *http.Request) (string, error) {
     return "", fmt.Errorf("No valid session found")
 }
 
+//Function to retrieves the role from the session cookie
+func GetUserFromSessionRole(r *http.Request) (string, string, error) {
+    cookie, err := r.Cookie("session_token")
+    if err == nil {
+        var userID, role string
+        // Request modifiy to retries user for the role
+        err = DB.QueryRow(`
+            SELECT users.id, users.role 
+            FROM users 
+            JOIN sessions ON users.id = sessions.user_id 
+            WHERE sessions.id = ?`, cookie.Value).Scan(&userID, &role)
+
+        if err == nil {
+            return userID, role, nil
+        }
+    }
+    // vy default we use user for the role
+    oauthCookie, err := r.Cookie("session")
+    if err == nil && oauthCookie.Value != "" {
+        return oauthCookie.Value, "user", nil 
+    }
+    return "", "", fmt.Errorf("No valid session found")
+}
+
 // Function to deletes expired sessions from the database
 func CleanupExpiredSessions() {
 	DB.Exec("DELETE FROM sessions WHERE expires_at <= CURRENT_TIMESTAMP")
@@ -234,10 +288,24 @@ func LogoutUser(w http.ResponseWriter, r *http.Request) {
 
 // Function to checks if the user is authenticated by verifying their session
 func CheckSession(w http.ResponseWriter, r *http.Request) {
-    userID, err := GetUserFromSession(r)
+    var userID, role string
+    var err error
+
+    // Check the session with user ID
+    userID, err = GetUserFromSession(r)
     if err == nil {
-        fmt.Println("✅ CheckSession: Utilisateur connecté:", userID)
+        // If session exist then check the role
+        _, role, err = GetUserFromSessionRole(r)
+        if err != nil {
+            role = "user" // if we can't retrievesthe role, we put user in default
+        }
+        // Sent the reponse with user ID and role
+        w.Header().Set("Content-Type", "application/json")
         w.WriteHeader(http.StatusOK)
+        json.NewEncoder(w).Encode(map[string]string{
+            "userID": userID,
+            "role":   role,
+        })
         return
     }
     http.Error(w, "Unauthorized", http.StatusUnauthorized)
@@ -262,6 +330,7 @@ type Activity struct {
 	Posts      []Post      `json:"posts"`
 	Likes      []LikeInfo  `json:"likes"`
 	Comments   []CommentInfo `json:"comments"`
+    CommentLikes     []CommentLikeInfo `json:"comment_likes"`
 }
 
 type Post struct {
@@ -283,6 +352,12 @@ type CommentInfo struct {
 	Comment   string `json:"comment"`
 	CreatedAt string `json:"created_at"`
 }
+type CommentLikeInfo struct {
+    CommentID string `json:"comment_id"`
+    Comment   string `json:"comment"`
+    PostTitle string `json:"post_title"`
+    Type      string `json:"type"` 
+}
 
 // function to display the templates
 func ServeActivity(w http.ResponseWriter, r *http.Request) {
@@ -302,18 +377,16 @@ func GetUserActivity(w http.ResponseWriter, r *http.Request) {
 
 	// Check if the database is initialized
 	if DB == nil {
-        fmt.Println("❌ Base de données non initialisée") 
         http.Error(w, "Erreur interne : base de données non initialisée", http.StatusInternalServerError)
         return
     }
     // Fetch posts created by the user
     rows, err := DB.Query("SELECT id, title, content, created_at FROM posts WHERE user_id = ?", userID)
     if err != nil {
-		fmt.Println("❌ Erreur SQL :", err)
-		
         http.Error(w, "Erreur lors de la récupération des posts", http.StatusInternalServerError)
         return
     }
+
     defer rows.Close()
 
 	// Loop through the fetched posts
@@ -367,8 +440,68 @@ func GetUserActivity(w http.ResponseWriter, r *http.Request) {
         }
         activity.Comments = append(activity.Comments, comment)
     }
+    // Fetch likes/dislike comments made by the user
+    rows, err = DB.Query(`
+    SELECT c.id, c.content, p.title, l.type
+    FROM likes l
+    JOIN comments c ON l.comment_id = c.id
+    JOIN posts p ON c.post_id = p.id
+    WHERE l.user_id = ? AND l.comment_id IS NOT NULL`, userID)
+    if err != nil {
+    http.Error(w, "Erreur lors de la récupération des likes des commentaires", http.StatusInternalServerError)
+    return
+    }
+
+    defer rows.Close()
+    
+    // // Loop through the fetched likes/dislike comments
+    for rows.Next() {
+    var commentLike CommentLikeInfo
+    if err := rows.Scan(&commentLike.CommentID, &commentLike.Comment, &commentLike.PostTitle, &commentLike.Type); err != nil {
+        http.Error(w, "Erreur lors de la lecture des likes des commentaires", http.StatusInternalServerError)
+        return
+    }
+    activity.CommentLikes = append(activity.CommentLikes, commentLike)
+    }
 	 // Set the response header in JSON
     w.Header().Set("Content-Type", "application/json")
     json.NewEncoder(w).Encode(activity)
 }
 
+// Function to check if the user has the correct role to connect
+func RoleMiddleware(requiredRole string, next http.HandlerFunc) http.HandlerFunc {
+    return func(w http.ResponseWriter, r *http.Request) {
+        userID, userRole, err := GetUserFromSessionRole(r)
+        if err != nil {
+            fmt.Println("❌ RoleMiddleware: Aucun utilisateur authentifié")
+            http.Redirect(w, r, "/login", http.StatusFound)
+            return
+        }
+        fmt.Println("👤 Utilisateur:", userID, "| Rôle:", userRole, "| Rôle requis:", requiredRole)
+
+        // Set the role hierarchie
+        roleHierarchy := map[string]int{
+            "guest":     0,
+            "user":      1,
+            "moderator": 2,
+            "admin":     3,
+        }
+        userLevel, userExists := roleHierarchy[userRole]
+        requiredLevel, requiredExists := roleHierarchy[requiredRole]
+
+        // Check if role exist
+        if !userExists || !requiredExists {
+            fmt.Println("Rôle inconnu:", userRole, "ou", requiredRole)
+            http.Error(w, "Erreur interne", http.StatusInternalServerError)
+            return
+        }
+
+        // Check if user has a good role or more
+        if userLevel < requiredLevel {
+            fmt.Println("Accès interdit: Rôle insuffisant")
+            http.Error(w, "Accès interdit", http.StatusForbidden)
+            return
+        }
+        next(w, r)
+    }
+}

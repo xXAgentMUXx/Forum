@@ -2,7 +2,19 @@
 document.addEventListener("DOMContentLoaded", function () {
     fetchNotifications();
     setInterval(fetchNotifications, 10000);
+
+    // check if you connect to forum
+    if (window.location.pathname === "/forum") {
+        closeNotificationBox();
+    }
 });
+
+// function to close the box when you are in the forum
+function closeNotificationBox() {
+    let notifBox = document.getElementById("notification-box");
+    notifBox.classList.add("hidden");
+    notifBox.style.display = "none";
+}
 
 // Toggles the visibility of the notification box
 function toggleNotificationBox() {
@@ -55,21 +67,36 @@ function fetchNotifications() {
                 deleteButton.innerText = "Supprimer";
                 deleteButton.classList.add("delete-notif");
                 deleteButton.onclick = () => deleteNotification(notif.id, notifElement); 
+
+                // Check if username contain email adress
+                let username = notif.username;
+                const emailExtensions = [
+                    ".com", ".fr", ".net", ".org", ".edu", ".gov", ".io", ".co", ".biz", ".info", 
+                    ".us", ".uk", ".ca", ".de", ".ru", ".cn", ".jp", ".in", ".br", ".au", ".it", 
+                    ".mx", ".es", ".se", ".pl", ".nl", ".ch", ".be", ".tv", ".me", ".co.uk", ".xyz", 
+                    ".asia", ".top", ".cc", ".mobi", ".name", ".pro", ".tel", ".int", ".aero", ".coop", 
+                    ".cat", ".eu", ".tv", ".sh", ".ws", ".pm", ".ps", ".tk", ".li", ".me", ".so", ".cd", 
+                    ".cg", ".kp", ".hr", ".sk"
+                ];
+                // Check if username contain these character as email
+                if (username.includes("@") && emailExtensions.some(ext => username.endsWith(ext))) {
+                    username = "Quelqu'un"; // Remplace par "Quelqu'un"
+                }
                 // Fetch If the notification is for a comment or a like
                 if (notif.action === "comment") {
                     let shortContent = notif.content.length > 50 ? notif.content.substring(0, 50) + "..." : notif.content;
                     notifElement.innerHTML = `
-                        <p><strong>${notif.username}</strong> a commenté votre post</p>
+                        <p><strong>${username}</strong> a commenté votre post</p>
                         <p>"${shortContent}"</p>
                         <small>${new Date(notif.created_at).toLocaleString()}</small>
                     `;
                 } else if (notif.action === "like") {
                     notifElement.innerHTML = `
-                        <p><strong>${notif.username}</strong> a ${notif.content} votre post/commentaire</p>
+                        <p><strong>${username}</strong> a ${notif.content} votre post/commentaire</p>
                         <small>${new Date(notif.created_at).toLocaleString()}</small>
                     `;
                 }
-                 // Add the delete button to the notification element
+                // Add the delete button to the notification element
                 notifElement.appendChild(deleteButton);
                 notifDropdown.appendChild(notifElement);
             });

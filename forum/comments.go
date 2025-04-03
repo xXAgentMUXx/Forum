@@ -18,7 +18,6 @@ func CreateComment(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
-
 	postID := r.FormValue("post_id")
 	content := r.FormValue("content")
 
@@ -28,7 +27,6 @@ func CreateComment(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error creating comment", http.StatusInternalServerError)
 		return
 	}
-
 	var postOwner string
 	err = auth.DB.QueryRow("SELECT user_id FROM posts WHERE id = ?", postID).Scan(&postOwner)
 
@@ -48,7 +46,6 @@ func GetComments(w http.ResponseWriter, r *http.Request) {
         http.Error(w, "Post ID is required", http.StatusBadRequest)
         return
     }
-
     rows, err := auth.DB.Query("SELECT id, user_id, content, created_at FROM comments WHERE post_id = ? ORDER BY created_at ASC", postID)
     if err != nil {
         http.Error(w, "Error retrieving comments", http.StatusInternalServerError)

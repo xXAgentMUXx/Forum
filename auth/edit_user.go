@@ -6,57 +6,86 @@ import (
 	"net/http"
 	"regexp"
 	"time"
+	"html/template"
 	"golang.org/x/crypto/bcrypt"
 )
+
+var tmpl = template.Must(template.ParseFiles("web/html/edit_user.html"))
 
 // Function to handles editing user information
 func EditUser(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
-        http.ServeFile(w, r, "web/html/edit_user.html")
-        return
-    }
-	// Retrieve the userID from the session to ensure the user is logged in
+		// Retreives the user ID session to ckeck if he is connected
+		userID, err := GetUserFromSession(r)
+		if err != nil {
+			http.Error(w, "Vous devez être connecté pour modifier votre compte", http.StatusUnauthorized)
+			return
+		}
+
+		// Retrieves role user from database
+		var role string
+		err = DB.QueryRow("SELECT role FROM users WHERE id = ?", userID).Scan(&role)
+		if err != nil {
+			http.Error(w, "Erreur lors de la récupération du rôle de l'utilisateur", http.StatusInternalServerError)
+			return
+		}
+		// Past the ID for the role and email of the user
+		tmplData := struct {
+			UserID string
+			Role   string
+		}{
+			UserID: userID,
+			Role:   role,
+		}
+		// Served the template with the role and email
+		err = tmpl.Execute(w, tmplData)
+		if err != nil {
+			log.Println("Erreur lors du rendu du template:", err)
+			http.Error(w, "Erreur interne du serveur", http.StatusInternalServerError)
+		}
+		return
+	}
+	// Check if methode is GET
+	if r.Method != http.MethodPost {
+		http.Error(w, "Méthode de requête non valide", http.StatusMethodNotAllowed)
+		return
+	}
+	// Retrieves ID user from sesssion
 	userID, err := GetUserFromSession(r)
 	if err != nil {
-		http.Error(w, "You need to be logged in to edit your account", http.StatusUnauthorized)
+		http.Error(w, "Vous devez être connecté pour modifier votre compte", http.StatusUnauthorized)
 		return
 	}
-	if r.Method != http.MethodPost {
-		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
-		return
-	}
-	// Retrieve form values for username, email, and password
+	// Retrieves the informations necessary
 	username := r.FormValue("username")
 	email := r.FormValue("email")
 	password := r.FormValue("password")
 
-	// Validate the email format
+	// Validate the email of the user
 	if !isValidEmail(email) {
-		http.Error(w, "Invalid email format", http.StatusBadRequest)
+		http.Error(w, "Format d'email invalide", http.StatusBadRequest)
 		return
 	}
-
-	// Check if the new email is already taken by another user
+	// Check if email is not already taken for another user
 	var count int
 	err = DB.QueryRow("SELECT COUNT(*) FROM users WHERE email = ? AND id != ?", email, userID).Scan(&count)
 	if err != nil {
-		http.Error(w, "Database error", http.StatusInternalServerError)
+		http.Error(w, "Erreur de base de données", http.StatusInternalServerError)
 		return
 	}
 	if count > 0 {
-		http.Error(w, "Email already taken", http.StatusConflict)
+		http.Error(w, "L'email est déjà pris", http.StatusConflict)
 		return
 	}
-	// Create the SQL query to update the user information
+	// Create the SQL request for update the user
 	updateQuery := "UPDATE users SET username = ?, email = ?"
 	args := []interface{}{username, email}
 
-
-	// If a new password was provided, hash it and add it
+	// If new password is created, then it is hased for security
 	if password != "" {
 		hashedPassword, err := hashPassword(password)
 		if err != nil {
-			http.Error(w, "Error hashing password", http.StatusInternalServerError)
+			http.Error(w, "Erreur lors du hachage du mot de passe", http.StatusInternalServerError)
 			return
 		}
 		updateQuery += ", password = ?"
@@ -68,13 +97,12 @@ func EditUser(w http.ResponseWriter, r *http.Request) {
 	// Execute the update
 	_, err = DB.Exec(updateQuery, args...)
 	if err != nil {
-		log.Println("Error updating user:", err)
-		http.Error(w, "Error updating user data", http.StatusInternalServerError)
+		log.Println("Erreur lors de la mise à jour de l'utilisateur:", err)
+		http.Error(w, "Erreur lors de la mise à jour des données utilisateur", http.StatusInternalServerError)
 		return
 	}
-	// Update the session with the new user data
+	// Update the session with new informations of the user
 	updateSession(w, r, userID, email)
-	fmt.Fprintln(w, "User updated successfully")
 }
 
 // Function to updates the session data
