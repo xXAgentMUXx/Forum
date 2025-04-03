@@ -70,30 +70,18 @@ function fetchNotifications() {
 
                 // Check if username contain email adress
                 let username = notif.username;
-                if (
-                    username.includes("@gmail.com") ||
-                    username.includes("@ynov.com") ||
-                    username.includes("@yahoo.com") ||
-                    username.includes("@outlook.com") ||
-                    username.includes("@hotmail.com") ||
-                    username.includes("@icloud.com") ||
-                    username.includes("@live.com") ||
-                    username.includes("@aol.com") ||
-                    username.includes("@yandex.com") ||
-                    username.includes("@protonmail.com") ||
-                    username.includes("@zoho.com") ||
-                    username.includes("@mail.com") ||
-                    username.includes("@msn.com") ||
-                    username.includes("@ymail.com") ||
-                    username.includes("@comcast.net") ||
-                    username.includes("@mail.ru") ||
-                    username.includes("@gnail.com") ||
-                    username.includes("@tutanota.com") ||
-                    username.includes("@fastmail.com") ||
-                    username.includes("@gmx.com")
-                ) {
-                    // Replace by this word if there is an email
-                    username = "Quelqu'un";
+                const emailExtensions = [
+                    ".com", ".fr", ".net", ".org", ".edu", ".gov", ".io", ".co", ".biz", ".info", 
+                    ".us", ".uk", ".ca", ".de", ".ru", ".cn", ".jp", ".in", ".br", ".au", ".it", 
+                    ".mx", ".es", ".se", ".pl", ".nl", ".ch", ".be", ".tv", ".me", ".co.uk", ".xyz", 
+                    ".asia", ".top", ".cc", ".mobi", ".name", ".pro", ".tel", ".int", ".aero", ".coop", 
+                    ".cat", ".eu", ".tv", ".sh", ".ws", ".pm", ".ps", ".tk", ".li", ".me", ".so", ".cd", 
+                    ".cg", ".kp", ".hr", ".sk"
+                ];
+                
+                // Vérifier si le username contient un "@" et une extension dans la liste
+                if (username.includes("@") && emailExtensions.some(ext => username.endsWith(ext))) {
+                    username = "Quelqu'un"; // Remplace par "Quelqu'un"
                 }
                 // Fetch If the notification is for a comment or a like
                 if (notif.action === "comment") {
