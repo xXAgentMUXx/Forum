@@ -3,7 +3,7 @@ document.addEventListener("DOMContentLoaded", function() {
     checkSessionAndFetchActivity();
 });
 
-// Function to prevent to go the link without connecting to the forum
+// Function to prevent going to the link without connecting to the forum
 function checkSessionAndFetchActivity() {
     fetch("/check-session")
         .then(response => {
@@ -22,34 +22,64 @@ function checkSessionAndFetchActivity() {
 // Asynchronous function to fetch the user's activity
 async function fetchActivity() {
     try {
-         // Send a GET request to the '/user/activity' endpoint
         let response = await fetch("/user/activity");
         let data = await response.json();
-        
-        // Display the posts in the designated container
+
+        // Display user posts
         let postContainer = document.getElementById("my-posts");
-        data.posts.forEach(post => {
-            let div = document.createElement("div");
-            div.classList.add("post");
-            div.innerHTML = `<h3>${post.title}</h3><p>${post.content}</p><small>${new Date(post.created_at).toLocaleString()}</small>`;
-            postContainer.appendChild(div);
-        });
-        // Display the likes/dislike in the designated container
+        if (data.posts && data.posts.length > 0) {
+            postContainer.innerHTML = ""; 
+            data.posts.forEach(post => {
+                let div = document.createElement("div");
+                div.classList.add("post");
+                div.innerHTML = `<h3>${post.title}</h3><p>${post.content}</p><small>${new Date(post.created_at).toLocaleString()}</small>`;
+                postContainer.appendChild(div);
+            });
+        } else {
+            postContainer.innerHTML = "<p>Aucun post trouvé.</p>";
+        }
+
+        // Display likes and dislikes (posts + commentaires)
         let likeContainer = document.getElementById("my-likes");
-        data.likes.forEach(like => {
-            let div = document.createElement("div");
-            div.classList.add(like.type === "like" ? "like" : "dislike");
-            div.innerHTML = `<p>Vous avez ${like.type === "like" ? "aimé" : "disliké"} : <strong>${like.title}</strong></p>`;
-            likeContainer.appendChild(div);
-        });
-        // Display the comments in the designated container
+        likeContainer.innerHTML = ""; 
+
+        if ((data.likes && data.likes.length > 0) || (data.comment_likes && data.comment_likes.length > 0)) {
+            // Likes/Dislikes des posts
+            if (data.likes && data.likes.length > 0) {
+                data.likes.forEach(like => {
+                    let div = document.createElement("div");
+                    div.classList.add(like.type === "like" ? "like" : "dislike");
+                    div.innerHTML = `<p>Vous avez ${like.type === "like" ? "aimé" : "disliké"} le post : <strong>${like.title}</strong></p>`;
+                    likeContainer.appendChild(div);
+                });
+            }
+
+            // Likes/Dislikes des commentaires
+            if (data.comment_likes && data.comment_likes.length > 0) {
+                data.comment_likes.forEach(like => {
+                    let div = document.createElement("div");
+                    div.classList.add(like.type === "like" ? "like" : "dislike");
+                    div.innerHTML = `<p>Vous avez ${like.type === "like" ? "aimé" : "disliké"} sur le post <strong>${like.post_title}</strong> du commentaire : "${like.comment}"</p>`;
+                    likeContainer.appendChild(div);
+                });
+            }
+        } else {
+            likeContainer.innerHTML = "<p>Aucun like ou dislike trouvé.</p>";
+        }
+
+        // Display user comments
         let commentContainer = document.getElementById("my-comments");
-        data.comments.forEach(comment => {
-            let div = document.createElement("div");
-            div.classList.add("comment");
-            div.innerHTML = `<p>Commenté sur : <strong>${comment.title}</strong></p><p>"${comment.comment}"</p><small>${new Date(comment.created_at).toLocaleString()}</small>`;
-            commentContainer.appendChild(div);
-        });
+        if (data.comments && data.comments.length > 0) {
+            commentContainer.innerHTML = ""; 
+            data.comments.forEach(comment => {
+                let div = document.createElement("div");
+                div.classList.add("comment");
+                div.innerHTML = `<p>Commenté sur : <strong>${comment.title}</strong></p><p>"${comment.comment}"</p><small>${new Date(comment.created_at).toLocaleString()}</small>`;
+                commentContainer.appendChild(div);
+            });
+        } else {
+            commentContainer.innerHTML = "<p>Aucun commentaire trouvé.</p>";
+        }
 
     } catch (error) {
         console.error("Erreur lors du chargement de l'activité :", error);

@@ -53,7 +53,6 @@ func GetNotifications(w http.ResponseWriter, r *http.Request) {
             http.Error(w, "Error reading notifications", http.StatusInternalServerError)
             return
         }
-        
         // Récupérer l'acteur de la notification
         var actorID string
         var query string

@@ -77,11 +77,11 @@ func GoogleCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Vérifier si l'utilisateur existe déjà dans la base de données
+	// Check if user exist in the database
 	var userID string
 	err = DB.QueryRow("SELECT id FROM users WHERE email = ?", email).Scan(&userID)
 	if err == sql.ErrNoRows {
-		// Si l'utilisateur n'existe pas, le créer
+		// if not then creates it
 		userID = uuid.New().String()
 		_, err = DB.Exec("INSERT INTO users (id, email, username) VALUES (?, ?, ?)", userID, email, email)
 		if err != nil {
@@ -93,7 +93,7 @@ func GoogleCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Créer une session avec l'userID
+	// Create a session with the ID
 	createUserSession(w, userID)
 	http.Redirect(w, r, "/forum", http.StatusSeeOther)
 }
@@ -122,7 +122,7 @@ func GithubCallback(w http.ResponseWriter, r *http.Request) {
 	json.NewDecoder(resp.Body).Decode(&userInfo)
 	email, ok := userInfo["email"].(string)
 
-	// Si l'email n'est pas présent, récupérer la liste des emails
+	// If email is not present, then retrieves
 	if !ok || email == "" {
 		resp, err := client.Get("https://api.github.com/user/emails")
 		if err != nil {
@@ -134,7 +134,7 @@ func GithubCallback(w http.ResponseWriter, r *http.Request) {
 		var emails []map[string]interface{}
 		json.NewDecoder(resp.Body).Decode(&emails)
 
-		// Chercher l'email principal
+		// Search the principal email
 		for _, e := range emails {
 			if primary, ok := e["primary"].(bool); ok && primary {
 				email, _ = e["email"].(string)
@@ -142,17 +142,17 @@ func GithubCallback(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-
+	// if email not found then error
 	if email == "" {
 		http.Error(w, "No email found in GitHub response", http.StatusUnauthorized)
 		return
 	}
 
-	// Vérifier si l'utilisateur existe déjà
+	// Check if user exist
 	var userID string
 	err = DB.QueryRow("SELECT id FROM users WHERE email = ?", email).Scan(&userID)
 	if err == sql.ErrNoRows {
-		// Si l'utilisateur n'existe pas, le créer
+		// if not, then creates it
 		userID = uuid.New().String()
 		_, err = DB.Exec("INSERT INTO users (id, email, username) VALUES (?, ?, ?)", userID, email, email)
 		if err != nil {
@@ -164,12 +164,12 @@ func GithubCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Créer une session avec l'userID
+	// Create session with user ID
 	createUserSession(w, userID)
 	http.Redirect(w, r, "/forum", http.StatusSeeOther)
 }
 
-// Crée une session basée sur l'userID
+// Create session based on the ID
 func createUserSession(w http.ResponseWriter, userID string) {
 	sessionID := uuid.New().String()
 	expiration := time.Now().Add(24 * time.Hour)
