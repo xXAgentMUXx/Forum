@@ -78,8 +78,7 @@ function fetchNotifications() {
                     ".cat", ".eu", ".tv", ".sh", ".ws", ".pm", ".ps", ".tk", ".li", ".me", ".so", ".cd", 
                     ".cg", ".kp", ".hr", ".sk"
                 ];
-                
-                // Vérifier si le username contient un "@" et une extension dans la liste
+                // Check if username contain these character as email
                 if (username.includes("@") && emailExtensions.some(ext => username.endsWith(ext))) {
                     username = "Quelqu'un"; // Remplace par "Quelqu'un"
                 }

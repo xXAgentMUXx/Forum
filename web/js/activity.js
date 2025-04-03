@@ -3,7 +3,7 @@ document.addEventListener("DOMContentLoaded", function() {
     checkSessionAndFetchActivity();
 });
 
-// Function to prevent to go the link without connecting to the forum
+// Function to prevent going to the link without connecting to the forum
 function checkSessionAndFetchActivity() {
     fetch("/check-session")
         .then(response => {
@@ -25,9 +25,10 @@ async function fetchActivity() {
         let response = await fetch("/user/activity");
         let data = await response.json();
 
-        // Check if post exist
+        // Display user posts
+        let postContainer = document.getElementById("my-posts");
         if (data.posts && data.posts.length > 0) {
-            let postContainer = document.getElementById("my-posts");
+            postContainer.innerHTML = ""; 
             data.posts.forEach(post => {
                 let div = document.createElement("div");
                 div.classList.add("post");
@@ -35,23 +36,41 @@ async function fetchActivity() {
                 postContainer.appendChild(div);
             });
         } else {
-            document.getElementById("my-posts").innerHTML = "<p>Aucun post trouvé.</p>";
+            postContainer.innerHTML = "<p>Aucun post trouvé.</p>";
         }
-        // Display th like and dislike
+
+        // Display likes and dislikes (posts + commentaires)
         let likeContainer = document.getElementById("my-likes");
-        if (data.likes && data.likes.length > 0) {
-            data.likes.forEach(like => {
-                let div = document.createElement("div");
-                div.classList.add(like.type === "like" ? "like" : "dislike");
-                div.innerHTML = `<p>Vous avez ${like.type === "like" ? "aimé" : "disliké"} : <strong>${like.title}</strong></p>`;
-                likeContainer.appendChild(div);
-            });
+        likeContainer.innerHTML = ""; 
+
+        if ((data.likes && data.likes.length > 0) || (data.comment_likes && data.comment_likes.length > 0)) {
+            // Likes/Dislikes des posts
+            if (data.likes && data.likes.length > 0) {
+                data.likes.forEach(like => {
+                    let div = document.createElement("div");
+                    div.classList.add(like.type === "like" ? "like" : "dislike");
+                    div.innerHTML = `<p>Vous avez ${like.type === "like" ? "aimé" : "disliké"} le post : <strong>${like.title}</strong></p>`;
+                    likeContainer.appendChild(div);
+                });
+            }
+
+            // Likes/Dislikes des commentaires
+            if (data.comment_likes && data.comment_likes.length > 0) {
+                data.comment_likes.forEach(like => {
+                    let div = document.createElement("div");
+                    div.classList.add(like.type === "like" ? "like" : "dislike");
+                    div.innerHTML = `<p>Vous avez ${like.type === "like" ? "aimé" : "disliké"} sur le post <strong>${like.post_title}</strong> du commentaire : "${like.comment}"</p>`;
+                    likeContainer.appendChild(div);
+                });
+            }
         } else {
             likeContainer.innerHTML = "<p>Aucun like ou dislike trouvé.</p>";
         }
-        // Display the commentary
+
+        // Display user comments
         let commentContainer = document.getElementById("my-comments");
         if (data.comments && data.comments.length > 0) {
+            commentContainer.innerHTML = ""; 
             data.comments.forEach(comment => {
                 let div = document.createElement("div");
                 div.classList.add("comment");
@@ -61,6 +80,7 @@ async function fetchActivity() {
         } else {
             commentContainer.innerHTML = "<p>Aucun commentaire trouvé.</p>";
         }
+
     } catch (error) {
         console.error("Erreur lors du chargement de l'activité :", error);
     }

@@ -330,6 +330,7 @@ type Activity struct {
 	Posts      []Post      `json:"posts"`
 	Likes      []LikeInfo  `json:"likes"`
 	Comments   []CommentInfo `json:"comments"`
+    CommentLikes     []CommentLikeInfo `json:"comment_likes"`
 }
 
 type Post struct {
@@ -351,6 +352,12 @@ type CommentInfo struct {
 	Comment   string `json:"comment"`
 	CreatedAt string `json:"created_at"`
 }
+type CommentLikeInfo struct {
+    CommentID string `json:"comment_id"`
+    Comment   string `json:"comment"`
+    PostTitle string `json:"post_title"`
+    Type      string `json:"type"` 
+}
 
 // function to display the templates
 func ServeActivity(w http.ResponseWriter, r *http.Request) {
@@ -370,18 +377,16 @@ func GetUserActivity(w http.ResponseWriter, r *http.Request) {
 
 	// Check if the database is initialized
 	if DB == nil {
-        fmt.Println("❌ Base de données non initialisée") 
         http.Error(w, "Erreur interne : base de données non initialisée", http.StatusInternalServerError)
         return
     }
     // Fetch posts created by the user
     rows, err := DB.Query("SELECT id, title, content, created_at FROM posts WHERE user_id = ?", userID)
     if err != nil {
-		fmt.Println("❌ Erreur SQL :", err)
-		
         http.Error(w, "Erreur lors de la récupération des posts", http.StatusInternalServerError)
         return
     }
+
     defer rows.Close()
 
 	// Loop through the fetched posts
@@ -434,6 +439,29 @@ func GetUserActivity(w http.ResponseWriter, r *http.Request) {
             return
         }
         activity.Comments = append(activity.Comments, comment)
+    }
+    // Fetch likes/dislike comments made by the user
+    rows, err = DB.Query(`
+    SELECT c.id, c.content, p.title, l.type
+    FROM likes l
+    JOIN comments c ON l.comment_id = c.id
+    JOIN posts p ON c.post_id = p.id
+    WHERE l.user_id = ? AND l.comment_id IS NOT NULL`, userID)
+    if err != nil {
+    http.Error(w, "Erreur lors de la récupération des likes des commentaires", http.StatusInternalServerError)
+    return
+    }
+
+    defer rows.Close()
+    
+    // // Loop through the fetched likes/dislike comments
+    for rows.Next() {
+    var commentLike CommentLikeInfo
+    if err := rows.Scan(&commentLike.CommentID, &commentLike.Comment, &commentLike.PostTitle, &commentLike.Type); err != nil {
+        http.Error(w, "Erreur lors de la lecture des likes des commentaires", http.StatusInternalServerError)
+        return
+    }
+    activity.CommentLikes = append(activity.CommentLikes, commentLike)
     }
 	 // Set the response header in JSON
     w.Header().Set("Content-Type", "application/json")
