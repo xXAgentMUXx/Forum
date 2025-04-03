@@ -5,9 +5,38 @@
     <link rel="stylesheet" type="text/css" href="/web/css/forum.css">
     <script defer src="/web/js/posts.js"></script>
     <script defer src="/web/js/comments.js"></script>
+    <script defer src="/web/js/rate_limiting.js"></script>
+    <script defer src="/web/js/notification.js"></script>
 </head>
 <body>
-    <a href="/" class="logout">Deconnect</a>
+    <div id="button-container">
+        <div id="notification-container">
+            <button id="notification-icon" onclick="toggleNotificationBox()">🔔</button>
+            <div id="notification-box" class="hidden">
+                <h3>Notifications :</h3>
+                <div id="notification-dropdown"></div>
+            </div>
+        </div>
+
+        {{ if eq .Email "test@outlook.fr" }}
+    <a href="/admin">
+        <button id="admin-button">Panneau Administrateur</button>
+    </a>
+    {{ end }}
+
+        <a href="/activity" class="activity-btn">Mon Activité</a>
+
+        <a href="/edit_user" class="edit-profile">Modifier mon compte</a>
+
+        <a href="/logout" class="logout">Déconnexion</a>
+
+        {{ if eq .Role "moderator" }}
+        <a href="/moderator">
+        <button id="moderator-button">Actions de Modérateur</button>
+        </a>
+        {{ end }}
+    </div>   
+    
     <h1>Forum</h1>
     <div>
         <label for="filter">Filtrer par :</label>
@@ -17,14 +46,31 @@
             <option value="my_posts">Mes posts</option>
             <option value="liked">Posts likés</option>
         </select>
-        <input type="text" id="category-id" placeholder="ID de la catégorie" style="display:none;">
+        <div id="category-filter-container" style="display: none;">
+            <label for="post-category">Catégorie :</label>
+            <select id="post-category-dropdown" onchange="applyFilter()">
+                <option value="">Sélectionner une catégorie</option>
+            </select>    
+        </div>   
     </div>
+
     <button onclick="showPostForm()">Créer un nouveau post</button>
     <div id="post-form" style="display: none;">
         <h2>Nouveau Post</h2>
         <input type="text" id="post-title" placeholder="Titre">
         <textarea id="post-content" placeholder="Contenu"></textarea>
+        <label for="post-category">Catégories :</label>
+        <select id="post-category" multiple>
+            <option value="">Sélectionner une ou plusieurs catégories</option>
+        </select>
+        <label for="post-image">Ajouter une image :</label>
+        <input type="file" id="post-image" accept="image/jpeg, image/png, image/gif" onchange="previewImage(event)">
+        <div id="image-preview" style="display:none;">
+            <img id="preview-img" src="" alt="Prévisualisation de l'image">
+            <span id="remove-img" onclick="removeImage()">✖</span>
+        </div>
         <button onclick="createPost()">Publier</button>
+        <button onclick="cancelPostCreation()">Annuler</button>
     </div>
     
     <div id="posts"></div>

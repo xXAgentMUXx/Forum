@@ -2,12 +2,12 @@
 document.addEventListener("DOMContentLoaded", function() {
 });
 
-// Function to display the comment form for a specific post
+// Function to display the comment form
 function showCommentForm(postID) {
     document.getElementById(`comment-form-${postID}`).style.display = "block";
 }
 
-// Function to post a comment for a specific post
+// Function to post a comment
 function postComment(postID) {
     let content = document.getElementById(`comment-text-${postID}`).value;
     fetch("/comment/create", {
@@ -19,7 +19,7 @@ function postComment(postID) {
 
 // Function to fetch and display comments
 function fetchComments(postID) {
-    fetch(`/comments?post_id=${postID}`) // Fetch comments from the server
+    fetch(`/comments?post_id=${postID}`)
         .then(response => response.json())
         .then(comments => {
             let commentContainer = document.getElementById(`comments-${postID}`);
@@ -30,14 +30,13 @@ function fetchComments(postID) {
                     likeCount = likeCount || 0;
                     dislikeCount = dislikeCount || 0;
 
-                    // Create a new comment element
+                    // Create a new div element for the comment
                     let commentElement = document.createElement("div");
                     commentElement.classList.add("comment");
                     commentElement.innerHTML = `
                         <p>${comment.content}</p>
-                        <button onclick="likeComment('${commentID}', 'like')">👍 <span id="like-count-${commentID}">${likeCount}</span></button>
-                        <button onclick="likeComment('${commentID}', 'dislike')">👎 <span id="dislike-count-${commentID}">${dislikeCount}</span></button>
-                        <button onclick="deleteComment('${commentID}')">🗑️ Supprimer</button>
+                        👍 <span id="like-count-${commentID}">${likeCount}</span>
+                        👎 <span id="dislike-count-${commentID}">${dislikeCount}</span>
                     `;
                     // Append the new comment to the container
                     commentContainer.appendChild(commentElement);
@@ -47,30 +46,6 @@ function fetchComments(postID) {
         .catch(error => console.error("Erreur lors du chargement des commentaires :", error));
 }
 
-// Function to like or dislike a comment
-function likeComment(commentID, type) {
-    fetch("/like/comment", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: `id=${commentID}&type=${type}`
-    }).then(() => {
-        fetchLikeDislikeCount(commentID, "comment", (likeCount, dislikeCount) => {
-            document.getElementById(`like-count-${commentID}`).innerText = likeCount;
-            document.getElementById(`dislike-count-${commentID}`).innerText = dislikeCount;
-        });
-    });
-}
 
-// Function to delete a comment
-function deleteComment(commentID) {
-    fetch("/comment/delete", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: `id=${commentID}`
-    }).then(() => fetchPosts());
-}
-// Function to cancel comment creation
-function cancelCommentCreation(postID) {
-    document.getElementById(`comment-form-${postID}`).style.display = "none";
-    document.getElementById(`comment-text-${postID}`).value = "";
-}
+
+
