@@ -67,10 +67,11 @@ document.addEventListener("DOMContentLoaded", function () {
                 <h2>Post :</h2>
                 <h3>${title}</h3>
                 <p>${content}</p>
-                ${imageHtml} <!-- L'image est maintenant au-dessus de la date -->
+                ${imageHtml}
                 <small style="display: block; margin-top: 10px;">Posté par ${author} le ${date}</small>
                 <div class="post-buttons">
                     <button class="delete-btn" data-id="${post.ID}">🗑️ Supprimer</button>
+                    <button class="report-btn" data-id="${post.ID}">⚠️ Signaler</button>
                 </div>
                 <h4>Comments :</h4>
                 <div id="comments-${post.ID}" class="comments-container">

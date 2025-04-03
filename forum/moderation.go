@@ -9,29 +9,28 @@ import (
 	"net/http"
 )
 
-
+// function to display the templates moderator
 func ServeModerator(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "web/html/moderator.html")
 }
-
+// function to display the templates admin
 func ServeAdmin(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "web/html/admin.html")
 }
 
+// Function to deletes a post by the admin
 func DeletePostByAdmin(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 		return
 	}
-
-	// Récupérer l'ID du post à supprimer
+	// Retrieve the post ID to delete
 	postID := r.FormValue("id")
 	if postID == "" {
 		http.Error(w, "Post ID is required", http.StatusBadRequest)
 		return
 	}
-
-	// Vérifier si le post existe dans la base de données
+	// Check if the post exists in the database
 	var postOwner string
 	err := auth.DB.QueryRow("SELECT user_id FROM posts WHERE id = ?", postID).Scan(&postOwner)
 	if err == sql.ErrNoRows {
@@ -41,33 +40,30 @@ func DeletePostByAdmin(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error retrieving post", http.StatusInternalServerError)
 		return
 	}
-
-	// Supprimer le post de la base de données
+	// Delete the post from the database
 	_, err = auth.DB.Exec("DELETE FROM posts WHERE id = ?", postID)
 	if err != nil {
 		http.Error(w, "Error deleting post", http.StatusInternalServerError)
 		return
 	}
-
-	// Répondre avec un message de succès
+	// Respond with a success message
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"message": "Post deleted successfully"})
 }
 
+// DeleteCommentAdmin deletes a comment by the admin
 func DeleteCommentAdmin(w http.ResponseWriter, r *http.Request) {
     if r.Method != http.MethodPost {
         http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
         return
     }
-
-    // Récupérer l'ID du commentaire
+    // Retrieve the comment ID
     commentID := r.FormValue("id")
     if commentID == "" {
         http.Error(w, "Comment ID is required", http.StatusBadRequest)
         return
     }
-
-    // Vérifier si le commentaire existe dans la base de données
+    // Check if the comment exists in the database
     var commentOwner string
     err := auth.DB.QueryRow("SELECT user_id FROM comments WHERE id = ?", commentID).Scan(&commentOwner)
     if err == sql.ErrNoRows {
@@ -77,31 +73,27 @@ func DeleteCommentAdmin(w http.ResponseWriter, r *http.Request) {
         http.Error(w, "Error retrieving comment", http.StatusInternalServerError)
         return
     }
-
-    // Supprimer le commentaire de la base de données
+    // Delete the comment from the database
     _, err = auth.DB.Exec("DELETE FROM comments WHERE id = ?", commentID)
     if err != nil {
         http.Error(w, "Error deleting comment", http.StatusInternalServerError)
         return
     }
-
-    fmt.Fprintf(w, "Comment deleted successfully!")
 }
 
+// Function to allows users to report posts
 func ReportPost(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 		return
 	}
-
-	// Vérifier si la connexion à la DB est active
+	// Check if the database connection is active
 	if auth.DB == nil {
 		log.Println("Database connection is nil")
 		http.Error(w, "Database error", http.StatusInternalServerError)
 		return
 	}
-
-	// Récupération des données du formulaire
+	// Retrieve the form data
 	postID := r.FormValue("id")
 	reason := r.FormValue("reason")
 
@@ -110,11 +102,7 @@ func ReportPost(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Missing required parameters", http.StatusBadRequest)
 		return
 	}
-
-	// Debugging : Afficher les valeurs récupérées
-	log.Println("Post ID:", postID, "Reason:", reason)
-
-	// Insérer dans la base de données avec un log
+	// Insert the report into the database
 	query := "INSERT INTO reports (post_id, reason, status) VALUES (?, ?, 'pending')"
 	log.Println("Executing SQL Query:", query)
 
@@ -124,58 +112,54 @@ func ReportPost(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error creating report", http.StatusInternalServerError)
 		return
 	}
-
-	// Répondre avec un message de succès
+	// Respond with a success message
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"message": "Report submitted successfully"})
 }
 
-
+// Function to allows the admin to resolve a report
 func ResolveReport(w http.ResponseWriter, r *http.Request) {
     if r.Method != http.MethodPost {
         http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
         return
     }
-
     reportID := r.FormValue("id")
     if reportID == "" {
         http.Error(w, "Report ID is required", http.StatusBadRequest)
         return
     }
-
-    // Mettre à jour le statut du rapport dans la base de données
+    // Update the report status in the database
     _, err := auth.DB.Exec("UPDATE reports SET status = 'resolved' WHERE id = ?", reportID)
     if err != nil {
         http.Error(w, "Error resolving report", http.StatusInternalServerError)
         return
     }
-
     w.Header().Set("Content-Type", "application/json")
     json.NewEncoder(w).Encode(map[string]string{"message": "Report resolved successfully"})
 }
 
+// Function to allows the admin to reject a report
 func RejectReport(w http.ResponseWriter, r *http.Request) {
     if r.Method != http.MethodPost {
         http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
         return
     }
-
     reportID := r.FormValue("id")
     if reportID == "" {
         http.Error(w, "Report ID is required", http.StatusBadRequest)
         return
     }
-
-    // Mettre à jour le statut du rapport dans la base de données
+    // Update the report status in the database
     _, err := auth.DB.Exec("UPDATE reports SET status = 'rejected' WHERE id = ?", reportID)
     if err != nil {
         http.Error(w, "Error rejecting report", http.StatusInternalServerError)
         return
     }
-
     w.Header().Set("Content-Type", "application/json")
     json.NewEncoder(w).Encode(map[string]string{"message": "Report rejected successfully"})
 }
+
+// Function to fetches all reports from the database
 func GetReports(w http.ResponseWriter, r *http.Request) {
     rows, err := auth.DB.Query("SELECT id, post_id, reason, status FROM reports")
     if err != nil {
@@ -200,55 +184,48 @@ func GetReports(w http.ResponseWriter, r *http.Request) {
         }
         reports = append(reports, report)
     }
-
     w.Header().Set("Content-Type", "application/json")
     json.NewEncoder(w).Encode(reports)
 }
 
+// Function to allows the admin to create a new category
 func CreateCategory(w http.ResponseWriter, r *http.Request) {
     if r.Method != http.MethodPost {
         http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
         return
     }
-
-    // Récupérer le nom de la catégorie depuis la requête
+    // Retrieve the category name from the request
     categoryName := r.FormValue("name")
     if categoryName == "" {
         http.Error(w, "Category name is required", http.StatusBadRequest)
         return
     }
-
-    // Vérification si la catégorie existe déjà
+    // Check if the category already exists
     var existingCategory string
     err := auth.DB.QueryRow("SELECT name FROM categories WHERE name = ?", categoryName).Scan(&existingCategory)
     if err == nil {
         http.Error(w, "Category already exists", http.StatusBadRequest)
         return
     }
-
-    // Si une erreur de scan se produit (catégorie non trouvée), on continue
+    // If a scan error occurs (category not found), continue
     if err != sql.ErrNoRows {
         http.Error(w, "Error checking category existence", http.StatusInternalServerError)
         return
     }
-
-    // Insérer la nouvelle catégorie dans la base de données
+    // Insert the new category into the database
     result, err := auth.DB.Exec("INSERT INTO categories (name) VALUES (?)", categoryName)
     if err != nil {
         http.Error(w, "Error creating category", http.StatusInternalServerError)
         return
     }
-
-    // Récupérer l'ID de la catégorie insérée
+    // Retrieve the ID of the inserted category
     lastInsertID, err := result.LastInsertId()
     if err != nil {
         http.Error(w, "Error retrieving category ID", http.StatusInternalServerError)
         return
     }
-
-    // Répondre avec un message de succès et l'ID de la nouvelle catégorie
+    // Respond with the new category ID
     w.Header().Set("Content-Type", "application/json")
-    log.Println("Nom de la catégorie reçu :", categoryName)
 
     json.NewEncoder(w).Encode(map[string]interface{}{
         "message": "Category created successfully",
@@ -256,72 +233,63 @@ func CreateCategory(w http.ResponseWriter, r *http.Request) {
     })
 }
 
+// Function to allows the admin to delete a category
 func DeleteCategory(w http.ResponseWriter, r *http.Request) {
     if r.Method != http.MethodPost {
         http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
         return
     }
-
-    // Récupérer l'ID de la catégorie à supprimer
+    // Retrieve the category ID to delete
     categoryID := r.FormValue("id")
     if categoryID == "" {
         http.Error(w, "Category ID is required", http.StatusBadRequest)
         return
     }
-
-    // Supprimer la catégorie de la base de données
+    // Delete the category from the database
     _, err := auth.DB.Exec("DELETE FROM categories WHERE id = ?", categoryID)
     if err != nil {
         http.Error(w, "Error deleting category", http.StatusInternalServerError)
         return
     }
-
-    // Répondre avec un message de succès
+    // Respond with a success message
     w.Header().Set("Content-Type", "application/json")
     json.NewEncoder(w).Encode(map[string]string{"message": "Category deleted successfully"})
 }
 
-// RequestModerator - User requests moderator role
+// RequestModerator handles a user's request for moderator role
 type ModeratorRequest struct {
 	UserID string `json:"user_id"`
 }
 
-
-// Fonction pour gérer la demande de modération
+// RequestModerator allows a user to request moderator status
 func RequestModerator(w http.ResponseWriter, r *http.Request) {
-
 	if r.Method != http.MethodPost {
-		http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
+		http.Error(w, "Unauthorized method", http.StatusMethodNotAllowed)
 		return
 	}
-	// Récupérer l'ID utilisateur depuis la session
+	// Retrieve the user ID from the session
 	userID, err := auth.GetUserFromSession(r)
 	if err != nil {
-		http.Error(w, "Utilisateur non authentifié", http.StatusUnauthorized)
+		http.Error(w, "User not authenticated", http.StatusUnauthorized)
 		return
 	}
-	// Log de l'ID utilisateur
-	log.Printf("Request Moderator - user_id: %s", userID)
-
-	// Enregistrer la demande en base de données
+	// Record the request in the database
 	_, err = auth.DB.Exec("INSERT INTO promotion_requests (user_id, status) VALUES (?, 'pending')", userID)
 	if err != nil {
-		http.Error(w, "Erreur lors de l'envoi de la demande", http.StatusInternalServerError)
+		http.Error(w, "Error submitting request", http.StatusInternalServerError)
 		return
 	}
-	// Répondre avec un message de succès
+	// Respond with a success message
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"message": "Demande de promotion envoyée avec succès"})
-
+	json.NewEncoder(w).Encode(map[string]string{"message": "Promotion request sent successfully"})
 }
 
-
-// GetModeratorRequests - Admin views pending requests
+// Function to allows the admin to view pending moderator requests
 func GetModeratorRequests(w http.ResponseWriter, r *http.Request) {
     rows, err := auth.DB.Query("SELECT id, user_id FROM promotion_requests WHERE status = 'pending'")
     if err != nil {
-        http.Error(w, "Erreur lors de la récupération des demandes", http.StatusInternalServerError)
-        log.Println("Erreur lors de la récupération des demandes:", err)
+        http.Error(w, "Error fetching requests", http.StatusInternalServerError)
+        log.Println("Error fetching requests:", err)
         return
     }
     defer rows.Close()
@@ -329,63 +297,53 @@ func GetModeratorRequests(w http.ResponseWriter, r *http.Request) {
     var requests []map[string]interface{}
     for rows.Next() {
         var id int
-        var userID string // userID est maintenant une chaîne (UUID ou autre)
+        var userID string
 
         if err := rows.Scan(&id, &userID); err != nil {
-            http.Error(w, "Erreur lors de la lecture des données", http.StatusInternalServerError)
-            log.Println("Erreur lors de la lecture des lignes de la base de données:", err)
+            http.Error(w, "Error reading data", http.StatusInternalServerError)
+            log.Println("Error reading rows:", err)
             return
         }
-
-        // Ignorez les demandes avec un user_id invalide
+        // Skip invalid user IDs
         if userID == "0" || userID == "" {
-            continue // Passez cette ligne si user_id est invalide
+            continue
         }
-
-        // Chercher le nom de l'utilisateur dans la base de données (exemple avec la table "users")
+        // Fetch the user's name from the database
         var username string
         err := auth.DB.QueryRow("SELECT username FROM users WHERE id = ?", userID).Scan(&username)
         if err != nil {
-            log.Println("Erreur lors de la récupération du nom d'utilisateur:", err)
-            username = "Nom d'utilisateur inconnu"
+            log.Println("Error fetching username:", err)
+            username = "Unknown user"
         }
 
-        // Si userID est valide, ajoutez-le à la liste des demandes
         requests = append(requests, map[string]interface{}{"id": id, "user_id": userID, "username": username})
     }
-
     if len(requests) == 0 {
-        fmt.Fprintln(w, "Aucune demande en attente")
+        fmt.Fprintln(w, "No pending requests")
         return
     }
-
     w.Header().Set("Content-Type", "application/json")
     json.NewEncoder(w).Encode(requests)
 }
 
-// ApproveModerator - Admin approves request and promotes user
+// Function to promotes a user to moderator
 func ApproveModerator(w http.ResponseWriter, r *http.Request) {
     requestID := r.URL.Query().Get("request_id")
     userID := r.URL.Query().Get("user_id")
 
-    // Log des paramètres reçus
-    log.Printf("Received requestID: %s, userID: %s", requestID, userID)
-
     if requestID == "" || userID == "" {
         log.Println("Error: Missing request_id or user_id")
-        http.Error(w, "ID de demande ou ID utilisateur manquant", http.StatusBadRequest)
+        http.Error(w, "Missing request_id or user_id", http.StatusBadRequest)
         return
     }
-
-    // Démarrer une transaction pour assurer l'intégrité des données
+    // Start a transaction to ensure data integrity
     tx, err := auth.DB.Begin()
     if err != nil {
         log.Println("Error starting transaction:", err)
         http.Error(w, err.Error(), http.StatusInternalServerError)
         return
     }
-
-    // Mettre à jour le rôle de l'utilisateur
+    // Update the user's role to 'moderator'
     _, err = tx.Exec("UPDATE users SET role = 'moderator' WHERE id = ?", userID)
     if err != nil {
         log.Println("Error updating user role:", err)
@@ -393,8 +351,7 @@ func ApproveModerator(w http.ResponseWriter, r *http.Request) {
         http.Error(w, err.Error(), http.StatusInternalServerError)
         return
     }
-
-    // Mettre à jour l'état de la demande
+    // Update the request status to 'approved'
     _, err = tx.Exec("UPDATE promotion_requests SET status = 'approved' WHERE id = ?", requestID)
     if err != nil {
         log.Println("Error updating request status:", err)
@@ -402,46 +359,49 @@ func ApproveModerator(w http.ResponseWriter, r *http.Request) {
         http.Error(w, err.Error(), http.StatusInternalServerError)
         return
     }
-
-    // Valider la transaction
+    // Commit the transaction
     if err := tx.Commit(); err != nil {
         log.Println("Error committing transaction:", err)
         http.Error(w, err.Error(), http.StatusInternalServerError)
         return
     }
 
-    fmt.Fprintln(w, "L'utilisateur a été promu au rôle de modérateur")
+    fmt.Fprintln(w, "User has been promoted to moderator")
 }
 
+// Function to rejects a moderator promotion request
 func RejectModerator(w http.ResponseWriter, r *http.Request) {
     requestID := r.URL.Query().Get("request_id")
     if requestID == "" {
-        http.Error(w, "ID de demande manquant", http.StatusBadRequest)
+        http.Error(w, "Missing request ID", http.StatusBadRequest)
         return
     }
-    // Mettre à jour l'état de la demande à 'rejected'
+    // Update the request status to 'rejected'
     _, err := auth.DB.Exec("UPDATE promotion_requests SET status = 'rejected' WHERE id = ?", requestID)
     if err != nil {
-        http.Error(w, "Erreur lors du rejet de la demande", http.StatusInternalServerError)
+        http.Error(w, "Error rejecting request", http.StatusInternalServerError)
         return
     }
-    fmt.Fprintln(w, "Demande rejetée avec succès")
+    fmt.Fprintln(w, "Request rejected successfully")
 }
 
-// UpdateUserRole - Admin promotes or demotes a user manually
+// Function to allows the admin to manually promote or demote a user
 func UpdateUserRole(w http.ResponseWriter, r *http.Request) {
-	userID := r.URL.Query().Get("user_id")
-	newRole := r.URL.Query().Get("role")
-	_, err := auth.DB.Exec("UPDATE users SET role = ? WHERE id = ?", newRole, userID)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	fmt.Fprintf(w, "User role updated to %s", newRole)
+    userID := r.URL.Query().Get("user_id")
+    newRole := r.URL.Query().Get("role")
+
+    _, err := auth.DB.Exec("UPDATE users SET role = ? WHERE id = ?", newRole, userID)
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+        return
+    }
+    fmt.Fprintf(w, "User role updated to %s", newRole)
 }
 
 // RemoveModeratorRole - Admin removes moderator role from a user
 func RemoveModeratorRole(w http.ResponseWriter, r *http.Request) {
+
+    // Verify if the request method is POST, if not return an error
     if r.Method != http.MethodPost {
         http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
         return
@@ -449,26 +409,29 @@ func RemoveModeratorRole(w http.ResponseWriter, r *http.Request) {
 
     userID := r.FormValue("user_id")
     if userID == "" {
-        http.Error(w, "User  ID is required", http.StatusBadRequest)
+        http.Error(w, "User ID is required", http.StatusBadRequest)
         return
     }
-
-    // Mettre à jour le rôle de l'utilisateur
+    // Update the user's role to 'user' (remove moderator privileges)
     _, err := auth.DB.Exec("UPDATE users SET role = 'user' WHERE id = ?", userID)
     if err != nil {
+        // If an error occurs during the database query, return an internal server error
         http.Error(w, "Error removing moderator role", http.StatusInternalServerError)
         return
     }
-
+    // Respond with a success message in JSON format
     w.Header().Set("Content-Type", "application/json")
     json.NewEncoder(w).Encode(map[string]string{"message": "Moderator role removed successfully"})
 }
 
+// Function to views the list of all moderators
 func GetModerators(w http.ResponseWriter, r *http.Request) {
+
+    // Query the database to get all users who have the 'moderator' role
     rows, err := auth.DB.Query("SELECT id, username FROM users WHERE role = 'moderator'")
     if err != nil {
-        http.Error(w, "Erreur lors de la récupération des modérateurs", http.StatusInternalServerError)
-        log.Println("Erreur lors de la récupération des modérateurs:", err)
+        http.Error(w, "Error retrieving moderators", http.StatusInternalServerError)
+        log.Println("Error retrieving moderators:", err)
         return
     }
     defer rows.Close()
@@ -476,20 +439,21 @@ func GetModerators(w http.ResponseWriter, r *http.Request) {
     var moderators []map[string]interface{}
     for rows.Next() {
         var id, username string
+        // Scan the result of the query into variables
         if err := rows.Scan(&id, &username); err != nil {
-            http.Error(w, "Erreur lors de la lecture des données", http.StatusInternalServerError)
-            log.Println("Erreur lors de la lecture des lignes de la base de données:", err)
+            http.Error(w, "Error reading data", http.StatusInternalServerError)
+            log.Println("Error reading database rows:", err)
             return
         }
-
+        // Add the moderator's ID and username to the list of moderators
         moderators = append(moderators, map[string]interface{}{"id": id, "username": username})
     }
-
+    // If no moderators are found, inform the user
     if len(moderators) == 0 {
-        fmt.Fprintln(w, "Aucun modérateur trouvé")
+        fmt.Fprintln(w, "No moderators found")
         return
     }
-
+    // Respond with the list of moderators in JSON format
     w.Header().Set("Content-Type", "application/json")
     json.NewEncoder(w).Encode(moderators)
 }

@@ -15,22 +15,21 @@ var tmpl = template.Must(template.ParseFiles("web/html/edit_user.html"))
 // Function to handles editing user information
 func EditUser(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
-		// Récupérer l'ID de l'utilisateur à partir de la session pour s'assurer que l'utilisateur est connecté
+		// Retreives the user ID session to ckeck if he is connected
 		userID, err := GetUserFromSession(r)
 		if err != nil {
 			http.Error(w, "Vous devez être connecté pour modifier votre compte", http.StatusUnauthorized)
 			return
 		}
 
-		// Récupérer le rôle de l'utilisateur depuis la base de données
+		// Retrieves role user from database
 		var role string
 		err = DB.QueryRow("SELECT role FROM users WHERE id = ?", userID).Scan(&role)
 		if err != nil {
 			http.Error(w, "Erreur lors de la récupération du rôle de l'utilisateur", http.StatusInternalServerError)
 			return
 		}
-
-		// Passer l'ID de l'utilisateur et son rôle à la template
+		// Past the ID for the role and email of the user
 		tmplData := struct {
 			UserID string
 			Role   string
@@ -38,7 +37,7 @@ func EditUser(w http.ResponseWriter, r *http.Request) {
 			UserID: userID,
 			Role:   role,
 		}
-		// Servir le template avec les données utilisateur et son rôle
+		// Served the template with the role and email
 		err = tmpl.Execute(w, tmplData)
 		if err != nil {
 			log.Println("Erreur lors du rendu du template:", err)
@@ -46,29 +45,28 @@ func EditUser(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	// Si la méthode est POST (modification des données)
+	// Check if methode is GET
 	if r.Method != http.MethodPost {
 		http.Error(w, "Méthode de requête non valide", http.StatusMethodNotAllowed)
 		return
 	}
-	// Récupérer l'ID de l'utilisateur de la session
+	// Retrieves ID user from sesssion
 	userID, err := GetUserFromSession(r)
 	if err != nil {
 		http.Error(w, "Vous devez être connecté pour modifier votre compte", http.StatusUnauthorized)
 		return
 	}
-	// Récupérer les valeurs du formulaire
+	// Retrieves the informations necessary
 	username := r.FormValue("username")
 	email := r.FormValue("email")
 	password := r.FormValue("password")
 
-	// Valider le format de l'email
+	// Validate the email of the user
 	if !isValidEmail(email) {
 		http.Error(w, "Format d'email invalide", http.StatusBadRequest)
 		return
 	}
-
-	// Vérifier si l'email n'est pas déjà pris par un autre utilisateur
+	// Check if email is not already taken for another user
 	var count int
 	err = DB.QueryRow("SELECT COUNT(*) FROM users WHERE email = ? AND id != ?", email, userID).Scan(&count)
 	if err != nil {
@@ -79,12 +77,11 @@ func EditUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "L'email est déjà pris", http.StatusConflict)
 		return
 	}
-
-	// Créer la requête SQL pour mettre à jour les informations utilisateur
+	// Create the SQL request for update the user
 	updateQuery := "UPDATE users SET username = ?, email = ?"
 	args := []interface{}{username, email}
 
-	// Si un nouveau mot de passe a été fourni, le hacher et l'ajouter à la requête
+	// If new password is created, then it is hased for security
 	if password != "" {
 		hashedPassword, err := hashPassword(password)
 		if err != nil {
@@ -97,19 +94,15 @@ func EditUser(w http.ResponseWriter, r *http.Request) {
 	updateQuery += " WHERE id = ?"
 	args = append(args, userID)
 
-	// Exécuter la mise à jour
+	// Execute the update
 	_, err = DB.Exec(updateQuery, args...)
 	if err != nil {
 		log.Println("Erreur lors de la mise à jour de l'utilisateur:", err)
 		http.Error(w, "Erreur lors de la mise à jour des données utilisateur", http.StatusInternalServerError)
 		return
 	}
-
-	// Mettre à jour la session avec les nouvelles informations de l'utilisateur
+	// Update the session with new informations of the user
 	updateSession(w, r, userID, email)
-
-	// Répondre avec succès
-	fmt.Fprintln(w, "Utilisateur mis à jour avec succès")
 }
 
 // Function to updates the session data

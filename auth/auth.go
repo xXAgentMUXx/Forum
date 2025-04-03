@@ -229,11 +229,12 @@ func GetUserFromSession(r *http.Request) (string, error) {
     return "", fmt.Errorf("No valid session found")
 }
 
+//Function to retrieves the role from the session cookie
 func GetUserFromSessionRole(r *http.Request) (string, string, error) {
     cookie, err := r.Cookie("session_token")
     if err == nil {
         var userID, role string
-        // Requête modifiée pour récupérer le rôle depuis `users`
+        // Request modifiy to retries user for the role
         err = DB.QueryRow(`
             SELECT users.id, users.role 
             FROM users 
@@ -244,12 +245,11 @@ func GetUserFromSessionRole(r *http.Request) (string, string, error) {
             return userID, role, nil
         }
     }
-
+    // vy default we use user for the role
     oauthCookie, err := r.Cookie("session")
     if err == nil && oauthCookie.Value != "" {
-        return oauthCookie.Value, "user", nil // Par défaut, rôle "user" pour OAuth
+        return oauthCookie.Value, "user", nil 
     }
-
     return "", "", fmt.Errorf("No valid session found")
 }
 
@@ -291,18 +291,15 @@ func CheckSession(w http.ResponseWriter, r *http.Request) {
     var userID, role string
     var err error
 
-    // Vérifier la session avec GetUserFromSession
+    // Check the session with user ID
     userID, err = GetUserFromSession(r)
     if err == nil {
-        // Une session existe, on tente de récupérer aussi le rôle
+        // If session exist then check the role
         _, role, err = GetUserFromSessionRole(r)
         if err != nil {
-            role = "user" // Par défaut, on met "user" si on ne peut pas récupérer le rôle
+            role = "user" // if we can't retrievesthe role, we put user in default
         }
-
-        fmt.Printf("✅ CheckSession: Utilisateur connecté: %s | Rôle: %s\n", userID, role)
-
-        // Envoi de la réponse avec l'ID et le rôle
+        // Sent the reponse with user ID and role
         w.Header().Set("Content-Type", "application/json")
         w.WriteHeader(http.StatusOK)
         json.NewEncoder(w).Encode(map[string]string{
@@ -311,8 +308,6 @@ func CheckSession(w http.ResponseWriter, r *http.Request) {
         })
         return
     }
-
-    fmt.Println("❌ CheckSession: Aucun utilisateur connecté")
     http.Error(w, "Unauthorized", http.StatusUnauthorized)
 }
 // This function is a middleware that checks if the user is authenticated before allowing access
@@ -445,6 +440,7 @@ func GetUserActivity(w http.ResponseWriter, r *http.Request) {
     json.NewEncoder(w).Encode(activity)
 }
 
+// Function to check if the user has the correct role to connect
 func RoleMiddleware(requiredRole string, next http.HandlerFunc) http.HandlerFunc {
     return func(w http.ResponseWriter, r *http.Request) {
         userID, userRole, err := GetUserFromSessionRole(r)
@@ -453,35 +449,31 @@ func RoleMiddleware(requiredRole string, next http.HandlerFunc) http.HandlerFunc
             http.Redirect(w, r, "/login", http.StatusFound)
             return
         }
-
         fmt.Println("👤 Utilisateur:", userID, "| Rôle:", userRole, "| Rôle requis:", requiredRole)
 
-        // Définition de la hiérarchie des rôles
+        // Set the role hierarchie
         roleHierarchy := map[string]int{
             "guest":     0,
             "user":      1,
             "moderator": 2,
             "admin":     3,
         }
-
         userLevel, userExists := roleHierarchy[userRole]
         requiredLevel, requiredExists := roleHierarchy[requiredRole]
 
-        // Vérifier que les rôles existent bien
+        // Check if role exist
         if !userExists || !requiredExists {
-            fmt.Println("❌ Rôle inconnu:", userRole, "ou", requiredRole)
+            fmt.Println("Rôle inconnu:", userRole, "ou", requiredRole)
             http.Error(w, "Erreur interne", http.StatusInternalServerError)
             return
         }
 
-        // Vérifier si l'utilisateur a le rôle requis ou un rôle supérieur
+        // Check if user has a good role or more
         if userLevel < requiredLevel {
-            fmt.Println("❌ Accès interdit: Rôle insuffisant")
+            fmt.Println("Accès interdit: Rôle insuffisant")
             http.Error(w, "Accès interdit", http.StatusForbidden)
             return
         }
-
-        fmt.Println("✅ Accès accordé")
         next(w, r)
     }
 }

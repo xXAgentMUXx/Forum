@@ -20,8 +20,7 @@ func ServeForum(w http.ResponseWriter, r *http.Request) {
         http.Error(w, "Unauthorized", http.StatusUnauthorized)
         return
     }
-
-    // Récupérer le rôle et l'email de l'utilisateur
+    // Get the role and email of the user
     var role, email string
     err = auth.DB.QueryRow("SELECT role, email FROM users WHERE id = ?", userID).Scan(&role, &email)
     if err != nil {
@@ -29,8 +28,7 @@ func ServeForum(w http.ResponseWriter, r *http.Request) {
         http.Error(w, "Error retrieving user data", http.StatusInternalServerError)
         return
     }
-
-    // Passer le rôle et l'email au template
+    // Get the dtat struct with the role and email
     data := struct {
         UserID string
         Role   string
@@ -40,14 +38,12 @@ func ServeForum(w http.ResponseWriter, r *http.Request) {
         Role:   role,
         Email:  email,
     }
-
-    // Charger et exécuter le template
+    // Load and execute the template
     tmpl, err := template.ParseFiles("web/html/forum.html")
     if err != nil {
         http.Error(w, "Error loading template", http.StatusInternalServerError)
         return
     }
-
     err = tmpl.Execute(w, data)
     if err != nil {
         http.Error(w, "Error rendering template", http.StatusInternalServerError)
@@ -125,9 +121,9 @@ func LikeContent(w http.ResponseWriter, r *http.Request, contentType string) {
 		return
 	}
 	// Create a notification for the owner of the post or comments
-	if err == nil && ownerID != userID {
-		CreateNotification(ownerID, contentID, "like", ""+typeLike)
-	}
+	if ownerID != userID {
+        CreateNotification(ownerID, contentID, "like", typeLike)
+    }
 	// Send a JSON response
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"message": "Like status updated successfully"})
