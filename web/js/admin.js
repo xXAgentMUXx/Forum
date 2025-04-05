@@ -146,9 +146,7 @@ document.addEventListener("DOMContentLoaded", function () {
             if (response.ok) {
                 alert("Post supprimé !");
                 fetchPosts();  
-            } else {
-                alert("Erreur lors de la suppression !");
-            }
+            } 
         } catch (error) {
             console.error("Erreur lors de la suppression du post:", error);
             alert("Une erreur s'est produite.");
@@ -207,6 +205,8 @@ function displayReports(reports) {
     // Display the templates
     reports.forEach(report => {
         const postID = report.post_id || "Inconnu";
+        const title = report.title || "Titre non disponible"; 
+        const content = report.content || "Contenu non disponible"; 
         const reason = report.reason || "Aucune raison";
         const status = report.status || "En attente";
         const reportID = report.id; 
@@ -216,6 +216,8 @@ function displayReports(reports) {
         reportElement.setAttribute("data-id", reportID); 
         reportElement.innerHTML = `
             <h3>Rapport sur le post ${postID}</h3>
+            <h4>Titre : ${title}</h4> 
+            <p>Contenu : ${content}</p> 
             <p>Raison : ${reason}</p>
             <p>Status : ${status}</p>
             <div class="report-buttons">
