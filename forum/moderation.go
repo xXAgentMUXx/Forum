@@ -172,10 +172,13 @@ func RejectReport(w http.ResponseWriter, r *http.Request) {
     json.NewEncoder(w).Encode(map[string]string{"message": "Report rejected and deleted successfully"})
 }
 
-
 // Function to fetches all reports from the database
 func GetReports(w http.ResponseWriter, r *http.Request) {
-    rows, err := auth.DB.Query("SELECT id, post_id, reason, status FROM reports")
+    rows, err := auth.DB.Query(`
+        SELECT r.id, r.post_id, r.reason, r.status, p.title, p.content 
+        FROM reports r 
+        JOIN posts p ON r.post_id = p.id
+    `)
     if err != nil {
         http.Error(w, "Error fetching reports", http.StatusInternalServerError)
         return
@@ -184,17 +187,19 @@ func GetReports(w http.ResponseWriter, r *http.Request) {
 
     var reports []map[string]any
     for rows.Next() {
-        var id, postID, reason, status string
-        err := rows.Scan(&id, &postID, &reason, &status)
+        var id, postID, reason, status, title, content string
+        err := rows.Scan(&id, &postID, &reason, &status, &title, &content)
         if err != nil {
             http.Error(w, "Error reading report data", http.StatusInternalServerError)
             return
         }
         report := map[string]any{
-            "id":     id,
+            "id":      id,
             "post_id": postID,
-            "reason": reason,
-            "status": status,
+            "reason":  reason,
+            "status":  status,
+            "title":   title,
+            "content": content,
         }
         reports = append(reports, report)
     }
