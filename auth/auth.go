@@ -282,8 +282,8 @@ func LogoutUser(w http.ResponseWriter, r *http.Request) {
         SameSite: http.SameSiteStrictMode,
     })
 
-    fmt.Println("✅ Déconnexion réussie. Redirection vers /login")
-    http.Redirect(w, r, "/login", http.StatusFound)
+    fmt.Println("✅ Déconnexion réussie. Redirection vers l'accueil")
+    http.Redirect(w, r, "/", http.StatusFound)
 }
 
 // Function to checks if the user is authenticated by verifying their session
@@ -320,8 +320,8 @@ func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
             next(w, r)
             return
         }
-        fmt.Println("❌ AuthMiddleware: Aucun utilisateur authentifié, redirection vers /login")
-        http.Redirect(w, r, "/login", http.StatusFound)
+        fmt.Println("❌ AuthMiddleware: Aucun utilisateur authentifié, redirection vers l'accueil")
+        http.Redirect(w, r, "/", http.StatusFound)
     }
 }
 
@@ -474,7 +474,7 @@ func RoleMiddleware(requiredRole string, next http.HandlerFunc) http.HandlerFunc
         userID, userRole, err := GetUserFromSessionRole(r)
         if err != nil {
             fmt.Println("❌ RoleMiddleware: Aucun utilisateur authentifié")
-            http.Redirect(w, r, "/login", http.StatusFound)
+            http.Redirect(w, r, "/", http.StatusFound)
             return
         }
         fmt.Println("👤 Utilisateur:", userID, "| Rôle:", userRole, "| Rôle requis:", requiredRole)
