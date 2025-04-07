@@ -6,7 +6,7 @@ document.addEventListener("DOMContentLoaded", function () {
         fetch("/check-session")
             .then(response => {
                 if (response.status === 401) {
-                    window.location.href = "/login"; // Redirect to login if the session is invalid
+                    window.location.href = "/"; // Redirect to login if the session is invalid
                     return;
                 }
                 return response.json(); // Convert the response to JSON
@@ -27,7 +27,7 @@ document.addEventListener("DOMContentLoaded", function () {
             })
             .catch(error => {
                 console.error("Error during session check:", error);
-                window.location.href = "/login"; 
+                window.location.href = "/"; 
             });
     }
     

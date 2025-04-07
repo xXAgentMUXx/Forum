@@ -116,6 +116,3 @@ func main() {
 		log.Fatal("❌ Erreur HTTPS :", err)
 	}
 }
-
-
-// sudo docker system prune -a
