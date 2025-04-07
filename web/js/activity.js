@@ -8,14 +8,14 @@ function checkSessionAndFetchActivity() {
     fetch("/check-session")
         .then(response => {
             if (response.status === 401) { 
-                window.location.href = "/login"; 
+                window.location.href = "/"; 
             } else {
                 fetchActivity(); 
             }
         })
         .catch(error => {
             console.error("Erreur lors de la vérification de la session:", error);
-            window.location.href = "/login"; 
+            window.location.href = "/"; 
         });
 }
 
