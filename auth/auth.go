@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/google/uuid"
@@ -15,19 +16,24 @@ import (
 // Database object
 var DB *sql.DB
 
-// InitDB initializes the database
+// InitDB initializes the SQLCipher-encrypted database
 func InitDB() {
+	if _, err := os.Stat("forum_encrypted.db"); os.IsNotExist(err) {
+		panic(err)
+	}
+	dsn := "forum_encrypted.db?_key=Mathys2006"
 	var err error
-	// Open SQLite database
-	DB, err = sql.Open("sqlite3", "forum.db")
+	DB, err = sql.Open("sqlite3", dsn)
 	if err != nil {
 		panic(err)
 	}
-	// Test the database connection
+	_, err = DB.Exec("PRAGMA key = 'Mathys2006';")
+	if err != nil {
+		panic(err)
+	}
 	if err = DB.Ping(); err != nil {
 		panic(err)
 	}
-	// Create the tables
 	DB.Exec(`CREATE TABLE IF NOT EXISTS sessions (
 		id TEXT PRIMARY KEY,
 		user_id TEXT,
@@ -58,17 +64,17 @@ func InitDB() {
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	seen BOOLEAN DEFAULT FALSE,
 	FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-)`)
-DB.Exec(`
+    )`)
+    DB.Exec(`
     CREATE TABLE IF NOT EXISTS reports (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     post_id TEXT NOT NULL,
     reason TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'pending',
     FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
-);
-`)
-DB.Exec(`
+    );
+    `)
+    DB.Exec(`
     CREATE TABLE IF NOT EXISTS promotion_requests (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id     TEXT NOT NULL,
@@ -78,9 +84,9 @@ DB.Exec(`
     approved_at TIMESTAMP NULL,
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (approved_by) REFERENCES users(id)
-);
-`)
-DB.Exec(`
+    );
+    `)
+    DB.Exec(`
     CREATE TABLE users (
     id          TEXT PRIMARY KEY,
     email       TEXT UNIQUE NOT NULL,
@@ -88,9 +94,10 @@ DB.Exec(`
     password    TEXT NULL,
     role        TEXT CHECK(role IN ('guest', 'user', 'moderator', 'admin')) DEFAULT 'user',
     created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-`)
+    );
+    `)
 }
+
 
 // Creat the template with the html file and URL
 func ServeHTML(w http.ResponseWriter, r *http.Request) {
