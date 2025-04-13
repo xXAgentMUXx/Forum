@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", function () {
     
                 // Redirect in function of the role of the user
                 if (window.location.pathname === "/admin" && data.role !== "admin") {
-                    console.warn("❌ Accès interdit: Vous devez être admin !");
+                    console.warn("Accès interdit: Vous devez être admin !");
                     window.location.href = "/forbidden"; 
                 } else {
                     fetchPosts(); 
@@ -56,7 +56,6 @@ document.addEventListener("DOMContentLoaded", function () {
         posts.forEach(post => {
             const title = post.Title || "Titre inconnu";
             const content = post.Content || "Aucun contenu disponible.";
-            const author = post.Author || "Anonyme";
             const date = post.CreatedAt ? new Date(post.CreatedAt).toLocaleDateString() : "Date inconnue";
 
             const imageHtml = post.ImagePath && post.ImagePath.trim() !== "" 
@@ -70,7 +69,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 <h3>${title}</h3>
                 <p>${content}</p>
                 ${imageHtml}
-                <small>Posté par ${author} le ${date}</small>
+                <small>Posté le ${date}</small>
                 <div class="post-buttons">
                     <button class="delete-btn" data-id="${post.ID}">🗑️ Supprimer</button>
                 </div>
