@@ -27,7 +27,3 @@ http://localhost:8080/
 ## Connexion pour adminstrateur :
  e-mail : test@outlook.fr
  mot de passe : Password
-<<<<<<< HEAD
-=======
-
->>>>>>> a09bdea8a3bf9f374877d2dd0ce4066d0f7ea58f
