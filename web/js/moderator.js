@@ -55,7 +55,6 @@ document.addEventListener("DOMContentLoaded", function () {
         posts.forEach(post => {
             const title = post.Title || "Unknown title";
             const content = post.Content || "No content available.";
-            const author = post.Author || "Anonymous";
             const date = post.CreatedAt ? new Date(post.CreatedAt).toLocaleDateString() : "Unknown date";
     
             const imageHtml = post.ImagePath && post.ImagePath.trim() !== "" 
@@ -69,7 +68,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 <h3>${title}</h3>
                 <p>${content}</p>
                 ${imageHtml}
-                <small style="display: block; margin-top: 10px;">Posted by ${author} on ${date}</small>
+                <small style="display: block; margin-top: 10px;">Posté le ${date}</small>
                 <div class="post-buttons">
                     <button class="delete-btn" data-id="${post.ID}">🗑️ Delete</button>
                     <button class="report-btn" data-id="${post.ID}">⚠️ Report</button>
