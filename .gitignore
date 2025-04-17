@@ -12,3 +12,5 @@ cert.pem
 key.pem
 localhost+2-key.pem
 localhost+2.pem
+
+/uploads
