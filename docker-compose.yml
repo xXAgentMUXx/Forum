@@ -7,7 +7,7 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - ./forum.db:/app/forum.db
+      - ./forum_encrypted.db:/app/forum_encrypted.db
       - ./rate_limiter.db:/app/rate_limiter.db
       - ./uploads:/app/uploads
     restart: unless-stopped

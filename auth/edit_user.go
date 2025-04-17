@@ -133,6 +133,7 @@ func updateSession(w http.ResponseWriter, r *http.Request, userID, email string)
 		SameSite: http.SameSiteStrictMode,
 	})
 	fmt.Println("Session updated successfully")
+	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }
 
 //Function to validates whether the provided email has a valid format

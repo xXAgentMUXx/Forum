@@ -45,7 +45,3 @@ function fetchComments(postID) {
         })
         .catch(error => console.error("Erreur lors du chargement des commentaires :", error));
 }
-
-
-
-
