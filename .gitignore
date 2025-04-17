@@ -9,7 +9,6 @@ auth/auth.go
 db/schema.sql
 
 
-
 /uploads
 
 forum_encrypted.db
