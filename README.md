@@ -5,7 +5,7 @@
 - Supprimer les fichiers "localhost.pem" et "localhost-key.pem" du projet VScode
 
 - Ouvrir un nouveau terminal
-- génèrer le nouveau certificat sur ton PC avec les commandes "mkcert -install" et "mkcert localhost"
+- générer le nouveau certificat sur ton PC avec les commandes "mkcert -install" et "mkcert localhost"
 - Ajouter le certificat à ton système avec ces 2 commandes (Linux uniquement) :
 sudo cp "$(mkcert -CAROOT)/rootCA.pem" /usr/local/share/ca-certificates/mkcert-root.crt
 sudo update-ca-certificates
@@ -24,7 +24,7 @@ sudo update-ca-certificates
 - Taper dans la barre d'URL, le lien suivant :
 http://localhost:8080/
 
-## Connexion pour adminstrateur :
+## Connexion pour administrateur :
  e-mail : test@outlook.fr
  mot de passe : Password
 <<<<<<< HEAD
