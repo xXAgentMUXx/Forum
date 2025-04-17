@@ -13,8 +13,9 @@ import (
 	forum "Forum/forum"
 
 	rate "Forum/security"
+	_ "github.com/xeodou/go-sqlcipher"
 
-	_ "github.com/mattn/go-sqlite3"
+	
 )
 
 // Function to load the env file

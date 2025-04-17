@@ -1,20 +1,33 @@
-# Utilisation de l'image officielle Golang
-FROM golang:1.24-alpine
+FROM golang:1.24-bullseye
 
-# Installation des dépendances nécessaires
-RUN apk add --no-cache gcc musl-dev
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    wget \
+    libssl-dev \
+    tcl \
+    autoconf \
+    automake \
+    libtool \
+    pkg-config \
+    sqlite3
 
-# Définition du répertoire de travail
+# Build SQLCipher from source
+WORKDIR /sqlcipher
+RUN wget https://github.com/sqlcipher/sqlcipher/archive/refs/tags/v4.5.6.tar.gz && \
+    tar -xzf v4.5.6.tar.gz && cd sqlcipher-4.5.6 && \
+    ./configure --enable-tempstore=yes CFLAGS="-DSQLITE_HAS_CODEC" --with-crypto-lib=openssl && \
+    make && make install
+
+# Set up environment for Go to link with SQLCipher
+ENV CGO_ENABLED=1
+ENV CGO_CFLAGS="-I/usr/local/include"
+ENV CGO_LDFLAGS="-L/usr/local/lib -lsqlcipher"
+
 WORKDIR /app
-
-# Copie des fichiers du projet
 COPY . .
 
-# Compilation de l'application
-RUN go mod tidy && go build -o server ./server/main.go
+RUN go mod download
+RUN go build -tags "sqlite_see" -o main ./server/main.go
 
-# Exposition du port HTTPS
-EXPOSE 8080
-
-# Commande pour lancer l'application
-CMD ["/app/server/main"]
+CMD ["./main"]
