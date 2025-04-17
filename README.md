@@ -24,6 +24,6 @@ sudo update-ca-certificates
 - Taper dans la barre d'URL, le lien suivant :
 http://localhost:8080/
 
-## Connexion pour adminstrateur :
+## Connexion pour administrateur :
  e-mail : test@outlook.fr
  mot de passe : Password
