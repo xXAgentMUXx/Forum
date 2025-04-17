@@ -1,10 +1,6 @@
 .env
 
 
-auth/auth.go
-
-
-db/schema.sql
 
 
 cert.pem
