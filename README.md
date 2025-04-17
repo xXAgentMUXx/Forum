@@ -31,3 +31,6 @@ http://localhost:8080/
 =======
 
 >>>>>>> a09bdea8a3bf9f374877d2dd0ce4066d0f7ea58f
+
+## Lien vers notre diaporama avec (entre autres) le diagramme de Gantt et le schéma fonctionnel :
+https://prezi.com/view/iMdE0OV5AtywX1Ss725c/
