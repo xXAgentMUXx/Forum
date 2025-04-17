@@ -1,5 +1,7 @@
 # Forum
 
+Eléves : Mathys Urban, Vittorio Gandossi, Cartagena Lucas, Bro Max
+
 ## Avant toute chose, on va installer mckert :
 - Ouvrir VSCode
 - Supprimer les fichiers "localhost.pem" et "localhost-key.pem" du projet VScode
@@ -27,10 +29,6 @@ http://localhost:8080/
 ## Connexion pour administrateur :
  e-mail : test@outlook.fr
  mot de passe : Password
-<<<<<<< HEAD
-=======
-
->>>>>>> a09bdea8a3bf9f374877d2dd0ce4066d0f7ea58f
 
 ## Lien vers notre diaporama avec (entre autres) le diagramme de Gantt et le schéma fonctionnel :
 https://prezi.com/view/iMdE0OV5AtywX1Ss725c/
