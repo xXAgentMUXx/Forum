@@ -14,3 +14,11 @@ localhost+2-key.pem
 localhost+2.pem
 
 /uploads
+
+forum_encrypted.db
+
+Dockerfile
+
+docker-compose.yml
+
+cookies.txt
