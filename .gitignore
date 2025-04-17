@@ -18,5 +18,3 @@ Dockerfile
 docker-compose.yml
 
 cookies.txt
-
-*.lol
